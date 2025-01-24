@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOp
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
+import { useNavigation } from '@react-navigation/native';
 
 // Wrap Axios with cookie jar support
 const jar = new CookieJar();
@@ -12,6 +13,7 @@ export default function Employees({ route }) {
   const { odooUrl, odooDb, odooUsername, odooPassword } = route.params || {};
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
 
   async function fetchEmployees() {
     try {
@@ -87,7 +89,7 @@ export default function Employees({ route }) {
       ) : (
         <Text style={styles.noDataText}>No employees found.</Text>
       )}
-      <TouchableOpacity style={styles.fab} onPress={() => Alert.alert('Add Employee', 'Add Employee button pressed!')}>
+      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('Enregistrement', { odooUrl, odooDb, odooUsername, odooPassword })}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </View>
