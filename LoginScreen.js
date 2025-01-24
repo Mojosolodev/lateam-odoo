@@ -4,27 +4,25 @@ import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert } from 'reac
 
 export default function LoginScreen({navigation}) {
 
-  // Odoo credentials
-  //const ODOO_URL = 'https://your-odoo-instance.com';
-  const ODOO_URL = 'http://192.168.43.232:8069/';
-  const ODOO_DB = 'odoodb';
-  const ODOO_USERNAME = 'admin';
-  const ODOO_PASSWORD = 'openpgpwd';
+  const [serverAddress, setServerAddress] = useState('');
+  const [database, setDatabase] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   async function authenticate() {
     const authData = {
       jsonrpc: "2.0",
       method: "call",
       params: {
-        db: ODOO_DB,
-        login: ODOO_USERNAME,
-        password: ODOO_PASSWORD,
+        db: database, // Using state value
+        login: emailOrUsername, // Using state value
+        password: password, // Using state value
       },
       id: new Date().getTime(),
     };
 
     try {
-      const response = await axios.post(`${ODOO_URL}web/session/authenticate`, authData, {
+      const response = await axios.post(`${serverAddress}web/session/authenticate`, authData, {
         headers: { "Content-Type": "application/json" },
       });
 
@@ -32,16 +30,15 @@ export default function LoginScreen({navigation}) {
       if (response.data && response.data.result) {
         Alert.alert('Connected Successfully', 'You are now authenticated.');
         navigation.navigate('Home', {
-          odooUrl: ODOO_URL,
-          odooDb: ODOO_DB,
-          odooUsername: ODOO_USERNAME,
-          odooPassword: ODOO_PASSWORD,
+          odooUrl: serverAddress,
+          odooDb: database,
+          odooUsername: emailOrUsername,
+          odooPassword: password,
         });
-        
       } else if (response.data && response.data.error && response.data.error.data.name === 'odoo.exceptions.AccessDenied') {
         Alert.alert('Wrong Credentials', 'Access Denied. Please check your username or password.');
       } else {
-        Alert.alert('Error', 'An unknown error occurred.');
+        Alert.alert('Error', 'Wrong Credentials.\nPlease Retry');
       }
     } catch (error) {
       console.error('Error authenticating with Odoo API:', error.response?.data || error.message);
@@ -49,31 +46,15 @@ export default function LoginScreen({navigation}) {
     }
   }
 
-  
-
-
-
-  const [serverAddress, setServerAddress] = useState('');
-  const [database, setDatabase] = useState('');
-  const [emailOrUsername, setEmailOrUsername] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleLogin = () => {
-    Alert.alert('Login', `Server: ${serverAddress}\nDatabase: ${database}\nEmail/Username: ${emailOrUsername}\nPassword: ${password}`);
-  };
-
   const handleCreateAccount = () => {
     Alert.alert('Redirect', 'Redirecting to create account screen...');
   };
-  const handleConnectOdoo = () => {
-    authenticate();
-  }
 
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Adresse du serveur"
+        placeholder="Adresse_serveur:http://<IPV4>:8069/"
         value={serverAddress}
         onChangeText={setServerAddress}
       />
@@ -96,7 +77,7 @@ export default function LoginScreen({navigation}) {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableOpacity style={styles.button} onPress={handleConnectOdoo}>
+      <TouchableOpacity style={styles.button} onPress={authenticate}>
         <Text style={styles.buttonText}>Connect Odoo</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={handleCreateAccount}>
