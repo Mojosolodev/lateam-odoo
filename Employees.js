@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
@@ -38,7 +38,7 @@ export default function Employees({ route }) {
         params: {
           model: 'hr.employee', // Model name
           method: 'search_read', // Method to call
-          args: [[], ['id', 'name', 'job_title']], // Arguments: domain and fields
+          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone']], // Include 'mobile_phone' and 'work_phone' fields
           kwargs: {}, // Add this parameter to satisfy Odoo's API requirements
         },
       });
@@ -72,14 +72,24 @@ export default function Employees({ route }) {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.employeeCard}>
-              <Text style={styles.employeeName}>{item.name}</Text>
-              <Text style={styles.employeeJob}>{item.job_title || 'No Job Title'}</Text>
+              <View style={styles.employeeImageContainer}>
+                <Text style={styles.employeeImage}>{item.name.charAt(0).toUpperCase()}</Text>
+              </View>
+              <View>
+                <Text style={styles.employeeName}>{item.name}</Text>
+                <Text style={styles.employeeJob}>{item.job_title || 'No Job Title'}</Text>
+                <Text style={styles.employeeMobile}>{item.mobile_phone || 'No Mobile Phone'}</Text>
+                <Text style={styles.employeeWorkPhone}>{item.work_phone || 'No Work Phone'}</Text>
+              </View>
             </View>
           )}
         />
       ) : (
         <Text style={styles.noDataText}>No employees found.</Text>
       )}
+      <TouchableOpacity style={styles.fab} onPress={() => Alert.alert('Add Employee', 'Add Employee button pressed!')}>
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -87,13 +97,44 @@ export default function Employees({ route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
   employeeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
     padding: 16,
     marginVertical: 8,
     borderRadius: 8,
     elevation: 3,
   },
+  employeeImageContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#007bff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  employeeImage: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
   employeeName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   employeeJob: { fontSize: 14, color: '#666', marginTop: 4 },
+  employeeMobile: { fontSize: 14, color: '#007bff', marginTop: 4 },
+  employeeWorkPhone: { fontSize: 14, color: '#009688', marginTop: 4 },
   noDataText: { fontSize: 16, color: '#888', textAlign: 'center', marginTop: 20 },
+  fab: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#007bff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    right: 20,
+    bottom: 20,
+    elevation: 5,
+  },
+  fabText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
 });
