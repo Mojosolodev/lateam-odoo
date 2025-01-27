@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Image } from 'react-native';
 
 export default function LoginScreen({navigation}) {
 
@@ -14,9 +14,9 @@ export default function LoginScreen({navigation}) {
       jsonrpc: "2.0",
       method: "call",
       params: {
-        db: database, // Using state value
-        login: emailOrUsername, // Using state value
-        password: password, // Using state value
+        db: database,
+        login: emailOrUsername,
+        password: password,
       },
       id: new Date().getTime(),
     };
@@ -26,7 +26,6 @@ export default function LoginScreen({navigation}) {
         headers: { "Content-Type": "application/json" },
       });
 
-      // Check for response data validity
       if (response.data && response.data.result) {
         Alert.alert('Connected Successfully', 'You are now authenticated.');
         navigation.navigate('Home', {
@@ -52,6 +51,10 @@ export default function LoginScreen({navigation}) {
 
   return (
     <View style={styles.container}>
+      <Image 
+        source={require('./images/laTeam noBG.png')} // Adjust the path if necessary
+        style={styles.logo}
+      />
       <TextInput
         style={styles.input}
         placeholder="Adresse_serveur:http://<IPV4>:8069/"
@@ -80,9 +83,9 @@ export default function LoginScreen({navigation}) {
       <TouchableOpacity style={styles.button} onPress={authenticate}>
         <Text style={styles.buttonText}>Connect Odoo</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={handleCreateAccount}>
+      {/* <TouchableOpacity onPress={handleCreateAccount}>
         <Text style={styles.createAccountText}>Créer un compte</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
@@ -94,6 +97,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#f5f5f5',
+  },
+  logo: {
+    width: 500, // Adjust the width as needed
+    height: 174, // Adjust the height as needed
   },
   input: {
     width: '100%',

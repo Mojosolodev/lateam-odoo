@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 
 export default function Enregistrement({ route, navigation }) {
-  const { odooUrl, odooDb, odooUsername, odooPassword } = route.params || {};
+  const { odooUrl, odooDb, odooUsername, odooPassword, onEmployeeAdded } = route.params || {};
 
   const [name, setName] = useState('');
   const [workEmail, setWorkEmail] = useState('');
@@ -44,7 +44,10 @@ export default function Enregistrement({ route, navigation }) {
 
       if (result.result) {
         Alert.alert('Success', 'Employee added successfully!');
-        navigation.goBack();
+        if (onEmployeeAdded) {
+          onEmployeeAdded(); // Trigger the callback only after successfully adding the employee
+        }
+        navigation.goBack(); // Navigate back to Employees.js
       } else {
         Alert.alert('Error', 'Failed to save employee. Please check your server configuration or inputs.');
       }

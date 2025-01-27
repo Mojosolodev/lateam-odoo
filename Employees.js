@@ -1,52 +1,52 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, Image } from 'react-native';
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
-import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 // Wrap Axios with cookie jar support
 const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
 
-export default function Employees({ route }) {
+export default function Employees({ route, navigation }) {
   const { odooUrl, odooDb, odooUsername, odooPassword } = route.params || {};
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
 
   async function fetchEmployees() {
     try {
+      setLoading(true);
       console.log('Authenticating with:', { odooUrl, odooDb, odooUsername, odooPassword });
-  
-      // Step 1: Authenticate and store session cookies
+
+      // Authenticate with Odoo
       const authResponse = await client.post(`${odooUrl}web/session/authenticate`, {
         jsonrpc: '2.0',
         params: { db: odooDb, login: odooUsername, password: odooPassword },
       });
-  
-      console.log('Full Auth Response:', authResponse.data);
-  
+
+      console.log('Auth Response:', authResponse.data);
+
       if (!authResponse.data.result) {
         Alert.alert('Error', 'Failed to authenticate with Odoo.');
         setLoading(false);
         return;
       }
-  
-      // Step 2: Fetch employee data using session cookies
+
+      // Fetch employees with image_1920 field
       const employeesResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
         jsonrpc: '2.0',
         method: 'call',
         params: {
-          model: 'hr.employee', // Model name
-          method: 'search_read', // Method to call
-          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone']], // Include 'mobile_phone' and 'work_phone' fields
-          kwargs: {}, // Add this parameter to satisfy Odoo's API requirements
+          model: 'hr.employee',
+          method: 'search_read',
+          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone', 'image_1920']],
+          kwargs: {},
         },
       });
-  
+
       console.log('Employees Response:', employeesResponse.data);
-  
+
       if (employeesResponse.data.result) {
         setEmployees(employeesResponse.data.result);
       } else {
@@ -59,10 +59,66 @@ export default function Employees({ route }) {
       setLoading(false);
     }
   }
-  
+
+  async function handleDelete(employee) {
+    Alert.alert(
+      'Delete Employee',
+      `Are you sure you want to delete ${employee.name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log(`Deleting employee with ID: ${employee.id}`);
+
+              // Make the API call to delete the employee
+              const deleteResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
+                jsonrpc: '2.0',
+                method: 'call',
+                params: {
+                  model: 'hr.employee', // Model name
+                  method: 'unlink', // Odoo method to delete a record
+                  args: [[employee.id]], // Pass the employee ID as a list
+                  kwargs: {}, // Required but empty
+                },
+              });
+
+              console.log('Delete Response:', deleteResponse.data);
+
+              if (deleteResponse.data.result) {
+                // Update the local state to remove the deleted employee
+                setEmployees((prevEmployees) =>
+                  prevEmployees.filter((emp) => emp.id !== employee.id)
+                );
+                Alert.alert('Success', `${employee.name} has been deleted.`);
+              } else {
+                Alert.alert('Error', 'Failed to delete the employee.');
+              }
+            } catch (error) {
+              console.error('Error deleting employee:', error.response?.data || error.message);
+              Alert.alert('Error', 'An error occurred while trying to delete the employee.');
+            }
+          },
+        },
+      ]
+    );
+  }
+
+
+
   useEffect(() => {
     fetchEmployees();
-  }, []);
+
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={fetchEmployees} style={{ marginRight: 16 }}>
+          <MaterialIcons name="refresh" size={28} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -74,14 +130,50 @@ export default function Employees({ route }) {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.employeeCard}>
-              <View style={styles.employeeImageContainer}>
-                <Text style={styles.employeeImage}>{item.name.charAt(0).toUpperCase()}</Text>
+              <View style={styles.employeeInfo}>
+                <View style={styles.employeeImageContainer}>
+                  {item.image_1920 ? (
+                    <Image
+                      source={{ uri: `data:image/png;base64,${item.image_1920}` }}
+                      style={styles.employeeImage}
+                    />
+                  ) : (
+                    <Text style={styles.employeeInitial}>
+                      {item.name ? item.name.charAt(0).toUpperCase() : '?'}
+                    </Text>
+                  )}
+                </View>
+
+
+                <View>
+                  <Text style={styles.employeeName}>{item.name}</Text>
+                  <Text style={styles.employeeJob}>{item.job_title || 'No Job Title'}</Text>
+                  <Text style={styles.employeeMobile}>{item.mobile_phone || 'No Mobile Phone'}</Text>
+                  <Text style={styles.employeeWorkPhone}>{item.work_phone || 'No Work Phone'}</Text>
+                </View>
               </View>
-              <View>
-                <Text style={styles.employeeName}>{item.name}</Text>
-                <Text style={styles.employeeJob}>{item.job_title || 'No Job Title'}</Text>
-                <Text style={styles.employeeMobile}>{item.mobile_phone || 'No Mobile Phone'}</Text>
-                <Text style={styles.employeeWorkPhone}>{item.work_phone || 'No Work Phone'}</Text>
+              <View style={styles.employeeActions}>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('UpdateEmployee', {
+                      employeeId: item.id,
+                      employeeName: item.name,
+                      employeeJob: item.job_title,
+                      employeeMobile: item.mobile_phone,
+                      employeeWorkPhone: item.work_phone,
+                      odooUrl,
+                      odooDb,
+                      odooUsername,
+                      odooPassword,
+                      onEmployeeUpdated: fetchEmployees,
+                    })
+                  }
+                >
+                  <MaterialIcons name="edit" size={24} color="#007bff" style={styles.icon} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDelete(item)}>
+                  <MaterialIcons name="delete" size={24} color="#ff3d00" style={styles.icon} />
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -89,7 +181,18 @@ export default function Employees({ route }) {
       ) : (
         <Text style={styles.noDataText}>No employees found.</Text>
       )}
-      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('Enregistrement', { odooUrl, odooDb, odooUsername, odooPassword })}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() =>
+          navigation.navigate('Enregistrement', {
+            odooUrl,
+            odooDb,
+            odooUsername,
+            odooPassword,
+            onEmployeeAdded: fetchEmployees,
+          })
+        }
+      >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </View>
@@ -101,26 +204,52 @@ const styles = StyleSheet.create({
   employeeCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#fff',
     padding: 16,
     marginVertical: 8,
     borderRadius: 8,
     elevation: 3,
   },
+  employeeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   employeeImageContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#007bff',
-    justifyContent: 'center',
+    backgroundColor: '#007bff', // Background color for employees without images
+    justifyContent: 'center',  // Center the content (image or text)
     alignItems: 'center',
     marginRight: 16,
+    overflow: 'hidden',        // Ensure the image fits the circular shape
   },
-  employeeImage: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
+  employeeImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
+  },
+  employeeInitial: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff', // White text for the initials
+    textAlign: 'center',
+  },
+
   employeeName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   employeeJob: { fontSize: 14, color: '#666', marginTop: 4 },
   employeeMobile: { fontSize: 14, color: '#007bff', marginTop: 4 },
   employeeWorkPhone: { fontSize: 14, color: '#009688', marginTop: 4 },
+  employeeActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  icon: {
+    marginHorizontal: 8,
+  },
   noDataText: { fontSize: 16, color: '#888', textAlign: 'center', marginTop: 20 },
   fab: {
     position: 'absolute',
