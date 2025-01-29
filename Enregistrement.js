@@ -76,12 +76,14 @@ export default function Enregistrement({ route, navigation }) {
         placeholder="Work Phone"
         value={workPhone}
         onChangeText={setWorkPhone}
+        keyboardType='phone-pad'
       />
       <TextInput
         style={styles.input}
         placeholder="Work Mobile"
         value={workMobile}
         onChangeText={setWorkMobile}
+        keyboardType='phone-pad'
       />
       <TextInput
         style={styles.input}

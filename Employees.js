@@ -106,7 +106,9 @@ export default function Employees({ route, navigation }) {
     );
   }
 
-
+  function getImageSize(base64String) {
+    return (base64String.length * (3 / 4)) - (base64String.endsWith("=") ? 1 : 0) - (base64String.endsWith("==") ? 1 : 0);
+  }
 
   useEffect(() => {
     fetchEmployees();
@@ -132,7 +134,7 @@ export default function Employees({ route, navigation }) {
             <View style={styles.employeeCard}>
               <View style={styles.employeeInfo}>
                 <View style={styles.employeeImageContainer}>
-                  {item.image_1920 ? (
+                  {item.image_1920 && getImageSize(item.image_1920) >= 5 * 1024 ? (
                     <Image
                       source={{ uri: `data:image/png;base64,${item.image_1920}` }}
                       style={styles.employeeImage}
