@@ -115,7 +115,7 @@ export default function Employees({ route, navigation }) {
 
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={fetchEmployees} style={{ marginRight: 16 }}>
+        <TouchableOpacity onPress={fetchEmployees} style={{ marginRight: 26 }}>
           <MaterialIcons name="refresh" size={28} color="black" />
         </TouchableOpacity>
       ),
@@ -131,7 +131,11 @@ export default function Employees({ route, navigation }) {
           data={employees}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.employeeCard}>
+            <TouchableOpacity style={styles.employeeCard}
+              onPress={() =>
+                navigation.navigate('EmployeeDetail', { employee: item })
+              }
+            >
               <View style={styles.employeeInfo}>
                 <View style={styles.employeeImageContainer}>
                   {item.image_1920 && getImageSize(item.image_1920) >= 5 * 1024 ? (
@@ -177,7 +181,7 @@ export default function Employees({ route, navigation }) {
                   <MaterialIcons name="delete" size={24} color="#ff3d00" style={styles.icon} />
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
         />
       ) : (

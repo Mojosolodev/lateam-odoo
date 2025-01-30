@@ -6,6 +6,7 @@ import HomeScreen from './HomeScreen';
 import Employees from './Employees';
 import Enregistrement from './Enregistrement';
 import UpdateEmployee from './UpdateEmployee';
+import EmployeeDetail from './EmployeeDetails';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function App() {
         <Stack.Screen name="Employees" component={Employees} />
         <Stack.Screen name="Enregistrement" component={Enregistrement} />
         <Stack.Screen name="UpdateEmployee" component={UpdateEmployee} />
+        <Stack.Screen name="EmployeeDetail" component={EmployeeDetail} />
       </Stack.Navigator>
     </NavigationContainer>
   );
