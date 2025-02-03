@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Button } from 'react-native-paper';
 
 export default function EmployeeDetail({ route }) {
   const { employee } = route.params;
@@ -7,6 +9,18 @@ export default function EmployeeDetail({ route }) {
   function getImageSize(base64String) {
     return (base64String.length * (3 / 4)) - (base64String.endsWith("=") ? 1 : 0) - (base64String.endsWith("==") ? 1 : 0);
   }
+
+  const handlePhoneCall = (phoneNumber) => {
+    if (phoneNumber) {
+      Linking.openURL(`tel:${phoneNumber}`);
+    }
+  };
+
+  const handleEmail = (email) => {
+    if (email) {
+      Linking.openURL(`mailto:${email}`);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -27,11 +41,50 @@ export default function EmployeeDetail({ route }) {
       <Text style={styles.detail}>
         <Text style={styles.label}>Job Title: </Text>{employee.job_title || 'N/A'}
       </Text>
+
+      <View style={styles.phoneContainer}>
+        <Text style={styles.detail}>
+          <Text style={styles.label}>Mobile Phone: </Text>{employee.mobile_phone || 'N/A'}
+        </Text>
+        {employee.mobile_phone && (
+          <TouchableOpacity onPress={() => handlePhoneCall(employee.mobile_phone)}>
+            <Ionicons name="call" size={20} color="#007bff" style={styles.icon} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={styles.phoneContainer}>
+        <Text style={styles.detail}>
+          <Text style={styles.label}>Work Phone: </Text>{employee.work_phone || 'N/A'}
+        </Text>
+        {employee.work_phone && (
+          <TouchableOpacity onPress={() => handlePhoneCall(employee.work_phone)}>
+            <Ionicons name="call" size={20} color="#007bff" style={styles.icon} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={styles.phoneContainer}>
+        <Text style={styles.detail}>
+          <Text style={styles.label}>Work Email: </Text>{employee.work_email || 'N/A'}
+        </Text>
+        {employee.work_email && (
+          <TouchableOpacity onPress={() => handleEmail(employee.work_email)}>
+            <Ionicons name="mail" size={20} color="#007bff" style={styles.icon} />
+          </TouchableOpacity>
+        )}
+      </View>
       <Text style={styles.detail}>
-        <Text style={styles.label}>Mobile Phone: </Text>{employee.mobile_phone || 'N/A'}
+          <Text style={styles.label}>Department: </Text>{employee.department_id[1] || 'N/A'}
       </Text>
       <Text style={styles.detail}>
-        <Text style={styles.label}>Work Phone: </Text>{employee.work_phone || 'N/A'}
+          <Text style={styles.label}>Job Position: </Text>{employee.job_id[1] || 'N/A'}
+      </Text>
+      <Text style={styles.detail}>
+          <Text style={styles.label}>Manager: </Text>{employee.manager_id || 'N/A'}
+      </Text>
+      <Text style={styles.detail}>
+          <Text style={styles.label}>Coach: </Text>{employee.coach_id[1] || 'N/A'}
       </Text>
     </View>
   );
@@ -72,10 +125,18 @@ const styles = StyleSheet.create({
   detail: {
     fontSize: 16,
     color: '#333',
-    marginTop: 5,
+    marginTop: 10,
   },
   label: {
     fontWeight: 'bold',
     color: '#555',
+  },
+  phoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  icon: {
+    marginLeft: 5,
   },
 });

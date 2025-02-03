@@ -33,14 +33,14 @@ export default function Employees({ route, navigation }) {
         return;
       }
 
-      // Fetch employees with image_1920 field
+      // Fetch employees with image_1920 and active status
       const employeesResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
         jsonrpc: '2.0',
         method: 'call',
         params: {
           model: 'hr.employee',
           method: 'search_read',
-          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone', 'image_1920']],
+          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone', 'image_1920','work_email','department_id','job_id','parent_id','coach_id','active']], // Include active
           kwargs: {},
         },
       });
@@ -137,6 +137,7 @@ export default function Employees({ route, navigation }) {
               }
             >
               <View style={styles.employeeInfo}>
+                <View style={styles.presenceIndicator(item.active)} />
                 <View style={styles.employeeImageContainer}>
                   {item.image_1920 && getImageSize(item.image_1920) >= 5 * 1024 ? (
                     <Image
@@ -149,7 +150,6 @@ export default function Employees({ route, navigation }) {
                     </Text>
                   )}
                 </View>
-
 
                 <View>
                   <Text style={styles.employeeName}>{item.name}</Text>
@@ -222,6 +222,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  presenceIndicator: (isActive) => ({
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: isActive ? 'green' : 'red', // Green if active, red if inactive
+    marginRight: 10,
+  }),
   employeeImageContainer: {
     width: 50,
     height: 50,
@@ -243,7 +250,6 @@ const styles = StyleSheet.create({
     color: '#fff', // White text for the initials
     textAlign: 'center',
   },
-
   employeeName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   employeeJob: { fontSize: 14, color: '#666', marginTop: 4 },
   employeeMobile: { fontSize: 14, color: '#007bff', marginTop: 4 },
