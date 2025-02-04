@@ -8,6 +8,10 @@ import { wrapper } from 'axios-cookiejar-support';
 const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
 
+function getImageSize(base64String) {
+  return (base64String.length * (3 / 4)) - (base64String.endsWith("=") ? 1 : 0) - (base64String.endsWith("==") ? 1 : 0);
+}
+
 export default function UpdateEmployee({ route, navigation }) {
   const { employee, odooUrl, odooDb, odooUsername, odooPassword, onEmployeeUpdated } = route.params;
 
@@ -79,7 +83,7 @@ export default function UpdateEmployee({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {employeeImage ? (
+      {employee.image_1920 && getImageSize(employee.image_1920) >= 5 * 1024 ? (
         <Image source={{ uri: employeeImage }} style={styles.image} />
       ) : (
         <View style={styles.placeholderImage}>
