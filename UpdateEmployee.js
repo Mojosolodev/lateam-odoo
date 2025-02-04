@@ -5,65 +5,18 @@ import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
 
-// Wrap Axios with cookie jar support
 const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
 
 export default function UpdateEmployee({ route, navigation }) {
-  const {
-    employeeId,
-    employeeName,
-    employeeJob,
-    employeeDepartment,
-    odooUrl,
-    odooDb,
-    odooUsername,
-    odooPassword,
-    onEmployeeUpdated,
-  } = route.params || {};
+  const { employee, odooUrl, odooDb, odooUsername, odooPassword, onEmployeeUpdated } = route.params;
 
-  const [name, setName] = useState(employeeName || '');
-  const [job, setJob] = useState(employeeJob || '');
-  const [departmentId, setDepartmentId] = useState(employeeDepartment || null);
+  const [name, setName] = useState(employee.name || '');
+  const [job, setJob] = useState(employee.job_title || '');
+  const [departmentId, setDepartmentId] = useState(employee.department_id ? employee.department_id[0] : null);
   const [departments, setDepartments] = useState([]);
-  const [employeeImage, setEmployeeImage] = useState(null);
+  const [employeeImage, setEmployeeImage] = useState(employee.image_1920 ? `data:image/png;base64,${employee.image_1920}` : null);
 
-  // Charger l'image de l'employé et son département actuel
-  useEffect(() => {
-    async function fetchEmployeeData() {
-      try {
-        const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
-          jsonrpc: '2.0',
-          method: 'call',
-          params: {
-            model: 'hr.employee',
-            method: 'read',
-            args: [[employeeId], ['image_1920', 'department_id']],
-            kwargs: {},
-          },
-        });
-
-        if (response.data.result && response.data.result.length > 0) {
-          const employeeData = response.data.result[0];
-
-          if (employeeData.image_1920) {
-            setEmployeeImage(`data:image/png;base64,${employeeData.image_1920}`);
-          }
-
-          // Définir departmentId uniquement s'il est présent
-          if (employeeData.department_id) {
-            setDepartmentId(employeeData.department_id[0]);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching employee data:', error);
-      }
-    }
-
-    fetchEmployeeData();
-  }, [employeeId]);
-
-  // Charger la liste des départements
   useEffect(() => {
     async function fetchDepartments() {
       try {
@@ -77,7 +30,6 @@ export default function UpdateEmployee({ route, navigation }) {
             kwargs: {},
           },
         });
-
         if (response.data.result) {
           setDepartments(response.data.result);
         }
@@ -85,57 +37,42 @@ export default function UpdateEmployee({ route, navigation }) {
         console.error('Error fetching departments:', error);
       }
     }
-
     fetchDepartments();
   }, []);
 
   async function handleSave() {
-    if (!name.trim()) {
-      Alert.alert('Validation Error', 'Name cannot be empty.');
+    if (!name.trim() || !job.trim() || !departmentId) {
+      Alert.alert('Validation Error', 'All fields are required.');
       return;
     }
-    if (!job.trim()) {
-      Alert.alert('Validation Error', 'Job Position cannot be empty.');
-      return;
-    }
-    if (!departmentId) {
-      Alert.alert('Validation Error', 'Please select a valid department.');
-      return;
-    }
-
     try {
       const authResponse = await client.post(`${odooUrl}web/session/authenticate`, {
         jsonrpc: '2.0',
         params: { db: odooDb, login: odooUsername, password: odooPassword },
       });
-
       if (!authResponse.data.result) {
         Alert.alert('Error', 'Failed to authenticate with Odoo.');
         return;
       }
-
       const updateResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
         jsonrpc: '2.0',
         method: 'call',
         params: {
           model: 'hr.employee',
           method: 'write',
-          args: [[employeeId], { name, job_title: job, department_id: departmentId }],
+          args: [[employee.id], { name, job_title: job, department_id: departmentId }],
           kwargs: {},
         },
       });
-
       if (updateResponse.data.result) {
         Alert.alert('Success', 'Employee details have been updated.');
-        if (onEmployeeUpdated) {
-          onEmployeeUpdated();
-        }
+        if (onEmployeeUpdated) onEmployeeUpdated();
         navigation.goBack();
       } else {
         Alert.alert('Error', 'Failed to update employee details.');
       }
     } catch (error) {
-      console.error('Error updating employee:', error.response?.data || error.message);
+      console.error('Error updating employee:', error);
       Alert.alert('Error', 'An error occurred while updating the employee details.');
     }
   }
@@ -153,19 +90,13 @@ export default function UpdateEmployee({ route, navigation }) {
       <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter Name" />
       <Text style={styles.label}>Job Title:</Text>
       <TextInput style={styles.input} value={job} onChangeText={setJob} placeholder="Enter Job Position" />
-
       <Text style={styles.label}>Department:</Text>
-      <Picker
-        selectedValue={departmentId}
-        onValueChange={(itemValue) => setDepartmentId(itemValue)}
-        style={styles.picker}
-      >
+      <Picker selectedValue={departmentId} onValueChange={setDepartmentId} style={styles.picker}>
         <Picker.Item label="Select Department" value={null} />
         {departments.map((dept) => (
           <Picker.Item key={dept.id} label={dept.name} value={dept.id} />
         ))}
       </Picker>
-
       <Button title="Update" onPress={handleSave} />
     </View>
   );

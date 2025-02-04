@@ -159,22 +159,20 @@ export default function Employees({ route, navigation }) {
                 </View>
               </View>
               <View style={styles.employeeActions}>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate('UpdateEmployee', {
-                      employeeId: item.id,
-                      employeeName: item.name,
-                      employeeJob: item.job_title,
-                      odooUrl,
-                      odooDb,
-                      odooUsername,
-                      odooPassword,
-                      onEmployeeUpdated: fetchEmployees,
-                    })
-                  }
-                >
-                  <MaterialIcons name="edit" size={24} color="#007bff" style={styles.icon} />
-                </TouchableOpacity>
+              <TouchableOpacity
+  onPress={() =>
+    navigation.navigate('UpdateEmployee', {
+      employee: item, // Pass full employee object
+      odooUrl,
+      odooDb,
+      odooUsername,
+      odooPassword,
+      onEmployeeUpdated: fetchEmployees,
+    })
+  }
+>
+  <MaterialIcons name="edit" size={24} color="#007bff" style={styles.icon} />
+</TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDelete(item)}>
                   <MaterialIcons name="delete" size={24} color="#ff3d00" style={styles.icon} />
                 </TouchableOpacity>
