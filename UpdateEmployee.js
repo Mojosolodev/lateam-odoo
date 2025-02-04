@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Image } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
@@ -13,8 +14,7 @@ export default function UpdateEmployee({ route, navigation }) {
     employeeId,
     employeeName,
     employeeJob,
-    employeeMobile,
-    employeeWorkPhone,
+    employeeDepartment,
     odooUrl,
     odooDb,
     odooUsername,
@@ -24,13 +24,13 @@ export default function UpdateEmployee({ route, navigation }) {
 
   const [name, setName] = useState(employeeName || '');
   const [job, setJob] = useState(employeeJob || '');
-  const [mobile, setMobile] = useState(employeeMobile || '');
-  const [workPhone, setWorkPhone] = useState(employeeWorkPhone || '');
+  const [departmentId, setDepartmentId] = useState(employeeDepartment || null);
+  const [departments, setDepartments] = useState([]);
   const [employeeImage, setEmployeeImage] = useState(null);
-  const [imageSize, setImageSize] = useState(null);
 
+  // Charger l'image de l'employé et son département actuel
   useEffect(() => {
-    async function fetchEmployeeImage() {
+    async function fetchEmployeeData() {
       try {
         const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
           jsonrpc: '2.0',
@@ -38,29 +38,56 @@ export default function UpdateEmployee({ route, navigation }) {
           params: {
             model: 'hr.employee',
             method: 'read',
-            args: [[employeeId], ['image_1920']],
+            args: [[employeeId], ['image_1920', 'department_id']],
             kwargs: {},
           },
         });
-        
+
         if (response.data.result && response.data.result.length > 0) {
-          const base64Image = response.data.result[0].image_1920;
-          if (base64Image) {
-            const binaryImage = atob(base64Image);
-            const sizeInBytes = binaryImage.length;
-            setImageSize(sizeInBytes);
-            if (sizeInBytes >= 5120) {
-              setEmployeeImage(`data:image/png;base64,${base64Image}`);
-            }
+          const employeeData = response.data.result[0];
+
+          if (employeeData.image_1920) {
+            setEmployeeImage(`data:image/png;base64,${employeeData.image_1920}`);
+          }
+
+          // Définir departmentId uniquement s'il est présent
+          if (employeeData.department_id) {
+            setDepartmentId(employeeData.department_id[0]);
           }
         }
       } catch (error) {
-        console.error('Error fetching employee image:', error);
+        console.error('Error fetching employee data:', error);
       }
     }
-    
-    fetchEmployeeImage();
+
+    fetchEmployeeData();
   }, [employeeId]);
+
+  // Charger la liste des départements
+  useEffect(() => {
+    async function fetchDepartments() {
+      try {
+        const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
+          jsonrpc: '2.0',
+          method: 'call',
+          params: {
+            model: 'hr.department',
+            method: 'search_read',
+            args: [[], ['id', 'name']],
+            kwargs: {},
+          },
+        });
+
+        if (response.data.result) {
+          setDepartments(response.data.result);
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      }
+    }
+
+    fetchDepartments();
+  }, []);
 
   async function handleSave() {
     if (!name.trim()) {
@@ -69,6 +96,10 @@ export default function UpdateEmployee({ route, navigation }) {
     }
     if (!job.trim()) {
       Alert.alert('Validation Error', 'Job Position cannot be empty.');
+      return;
+    }
+    if (!departmentId) {
+      Alert.alert('Validation Error', 'Please select a valid department.');
       return;
     }
 
@@ -89,7 +120,7 @@ export default function UpdateEmployee({ route, navigation }) {
         params: {
           model: 'hr.employee',
           method: 'write',
-          args: [[employeeId], { name, job_title: job, mobile_phone: mobile, work_phone: workPhone }],
+          args: [[employeeId], { name, job_title: job, department_id: departmentId }],
           kwargs: {},
         },
       });
@@ -120,12 +151,21 @@ export default function UpdateEmployee({ route, navigation }) {
       )}
       <Text style={styles.label}>Name:</Text>
       <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter Name" />
-      <Text style={styles.label}>Job Position:</Text>
+      <Text style={styles.label}>Job Title:</Text>
       <TextInput style={styles.input} value={job} onChangeText={setJob} placeholder="Enter Job Position" />
-      <Text style={styles.label}>Work Mobile:</Text>
-      <TextInput style={styles.input} value={mobile} onChangeText={setMobile} placeholder="Enter Work Mobile" keyboardType="phone-pad" />
-      <Text style={styles.label}>Work Phone:</Text>
-      <TextInput style={styles.input} value={workPhone} onChangeText={setWorkPhone} placeholder="Enter Work Phone" keyboardType="phone-pad" />
+
+      <Text style={styles.label}>Department:</Text>
+      <Picker
+        selectedValue={departmentId}
+        onValueChange={(itemValue) => setDepartmentId(itemValue)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Department" value={null} />
+        {departments.map((dept) => (
+          <Picker.Item key={dept.id} label={dept.name} value={dept.id} />
+        ))}
+      </Picker>
+
       <Button title="Update" onPress={handleSave} />
     </View>
   );
@@ -141,6 +181,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginBottom: 16,
     width: '100%',
+  },
+  picker: {
+    width: '100%',
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 16,
   },
   image: {
     width: 150,

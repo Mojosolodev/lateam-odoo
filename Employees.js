@@ -165,8 +165,6 @@ export default function Employees({ route, navigation }) {
                       employeeId: item.id,
                       employeeName: item.name,
                       employeeJob: item.job_title,
-                      employeeMobile: item.mobile_phone,
-                      employeeWorkPhone: item.work_phone,
                       odooUrl,
                       odooDb,
                       odooUsername,
