@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import Employees from './Employees';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
+import Employees from './Employees';
 
-// Wrap Axios with cookie jar support
 const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
 
@@ -16,13 +15,14 @@ const Tab = createBottomTabNavigator();
 function Dashboard({ route }) {
   const { odooUrl, odooDb, odooUsername, odooPassword } = route.params || {};
   const [employeeCount, setEmployeeCount] = useState(null);
-  const [previousEmployeeCount, setPreviousEmployeeCount] = useState(null);
+  const [departmentCount, setDepartmentCount] = useState(null);
+  const [jobPositionCount, setJobPositionCount] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isFetching, setIsFetching] = useState(false); // New state for fetching
+  const [isFetching, setIsFetching] = useState(false);
 
-  async function fetchEmployeeCount() {
+  async function fetchCounts() {
     try {
-      setIsFetching(true); // Start fetching
+      setIsFetching(true);
       const authResponse = await client.post(`${odooUrl}web/session/authenticate`, {
         jsonrpc: '2.0',
         params: { db: odooDb, login: odooUsername, password: odooPassword },
@@ -33,43 +33,42 @@ function Dashboard({ route }) {
         return;
       }
 
-      const countResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
-        jsonrpc: '2.0',
-        method: 'call',
-        params: {
-          model: 'hr.employee',
-          method: 'search_count',
-          args: [[]],
-          kwargs: {},
-        },
-      });
+      const models = ['hr.employee', 'hr.department', 'hr.job'];
+      const setCounts = [setEmployeeCount, setDepartmentCount, setJobPositionCount];
 
-      if (countResponse.data.result) {
-        // Update employee count only if it's different
-        if (previousEmployeeCount !== countResponse.data.result) {
-          setPreviousEmployeeCount(employeeCount); // Store the current count before updating
-          setEmployeeCount(countResponse.data.result);
+      await Promise.all(models.map(async (model, index) => {
+        const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
+          jsonrpc: '2.0',
+          method: 'call',
+          params: {
+            model: model,
+            method: 'search_count',
+            args: [[]],
+            kwargs: {},
+          },
+        });
+        if (response.data.result) {
+          setCounts[index](response.data.result);
+        } else {
+          Alert.alert('Error', `Failed to fetch ${model} count.`);
         }
-      } else {
-        Alert.alert('Error', 'Failed to fetch employee count.');
-      }
+      }));
     } catch (error) {
-      console.error('Error fetching employee count:', error.response?.data || error.message);
-      Alert.alert('Error', 'An error occurred while fetching employee count.');
+      console.error('Error fetching counts:', error.response?.data || error.message);
+      Alert.alert('Error', 'An error occurred while fetching data.');
     } finally {
-      setIsFetching(false); // Stop fetching
+      setIsFetching(false);
     }
   }
 
   useEffect(() => {
-    fetchEmployeeCount();
-    const interval = setInterval(fetchEmployeeCount, 10000); // Fetch every 10 seconds
-
-    return () => clearInterval(interval); // Cleanup interval on unmount
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 10000);
+    return () => clearInterval(interval);
   }, [odooUrl, odooDb, odooUsername, odooPassword]);
 
   useEffect(() => {
-    setLoading(false); // Set loading to false after the first mount
+    setLoading(false);
   }, []);
 
   return (
@@ -77,10 +76,20 @@ function Dashboard({ route }) {
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Total Employees</Text>
-          <Text style={styles.cardCount}>{employeeCount}</Text>
-        </View>
+        <>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Total Employees</Text>
+            <Text style={styles.cardCount}>{employeeCount}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Total Departments</Text>
+            <Text style={styles.cardCount}>{departmentCount}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Total Job Positions</Text>
+            <Text style={styles.cardCount}>{jobPositionCount}</Text>
+          </View>
+        </>
       )}
       {isFetching && (
         <View style={styles.overlay}>
@@ -97,9 +106,9 @@ export default function HomeScreen({ route }) {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarStyle: { backgroundColor: '#007bff' }, // Set bottom tab bar color
-        tabBarActiveTintColor: '#ffffff', // Active icon color
-        tabBarInactiveTintColor: '#d1d1d1', // Inactive icon color
+        tabBarStyle: { backgroundColor: '#007bff' },
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: '#d1d1d1',
       }}
     >
       <Tab.Screen
@@ -150,6 +159,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
+    marginBottom: 10,
   },
   cardTitle: {
     fontSize: 22,
@@ -168,6 +178,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f4f8',
-    zIndex: 1000, // Ensure it appears on top
+    zIndex: 1000,
   },
 });

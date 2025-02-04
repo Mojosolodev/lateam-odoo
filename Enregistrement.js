@@ -87,7 +87,7 @@ export default function Enregistrement({ route, navigation }) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Job Position"
+        placeholder="Job Title"
         value={jobPosition}
         onChangeText={setJobPosition}
       />
