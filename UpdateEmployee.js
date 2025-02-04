@@ -8,10 +8,6 @@ import { wrapper } from 'axios-cookiejar-support';
 const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
 
-function getImageSize(base64String) {
-  return (base64String.length * (3 / 4)) - (base64String.endsWith("=") ? 1 : 0) - (base64String.endsWith("==") ? 1 : 0);
-}
-
 export default function UpdateEmployee({ route, navigation }) {
   const { employee, odooUrl, odooDb, odooUsername, odooPassword, onEmployeeUpdated } = route.params;
 
@@ -19,7 +15,13 @@ export default function UpdateEmployee({ route, navigation }) {
   const [job, setJob] = useState(employee.job_title || '');
   const [departmentId, setDepartmentId] = useState(employee.department_id ? employee.department_id[0] : null);
   const [departments, setDepartments] = useState([]);
+  const [jobId, setJobId] = useState(employee.job_id ? employee.job_id[0] : null);
+  const [jobPositions, setJobPositions] = useState([]);
   const [employeeImage, setEmployeeImage] = useState(employee.image_1920 ? `data:image/png;base64,${employee.image_1920}` : null);
+
+  function getImageSize(base64String) {
+    return (base64String.length * (3 / 4)) - (base64String.endsWith("=") ? 1 : 0) - (base64String.endsWith("==") ? 1 : 0);
+  }
 
   useEffect(() => {
     async function fetchDepartments() {
@@ -41,11 +43,33 @@ export default function UpdateEmployee({ route, navigation }) {
         console.error('Error fetching departments:', error);
       }
     }
+
+    async function fetchJobPositions() {
+      try {
+        const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
+          jsonrpc: '2.0',
+          method: 'call',
+          params: {
+            model: 'hr.job',
+            method: 'search_read',
+            args: [[], ['id', 'name']],
+            kwargs: {},
+          },
+        });
+        if (response.data.result) {
+          setJobPositions(response.data.result);
+        }
+      } catch (error) {
+        console.error('Error fetching job positions:', error);
+      }
+    }
+
     fetchDepartments();
+    fetchJobPositions();
   }, []);
 
   async function handleSave() {
-    if (!name.trim() || !job.trim() || !departmentId) {
+    if (!name.trim() || !job.trim() || !departmentId || !jobId) {
       Alert.alert('Validation Error', 'All fields are required.');
       return;
     }
@@ -64,7 +88,7 @@ export default function UpdateEmployee({ route, navigation }) {
         params: {
           model: 'hr.employee',
           method: 'write',
-          args: [[employee.id], { name, job_title: job, department_id: departmentId }],
+          args: [[employee.id], { name, job_title: job, department_id: departmentId, job_id: jobId }],
           kwargs: {},
         },
       });
@@ -93,7 +117,7 @@ export default function UpdateEmployee({ route, navigation }) {
       <Text style={styles.label}>Name:</Text>
       <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter Name" />
       <Text style={styles.label}>Job Title:</Text>
-      <TextInput style={styles.input} value={job} onChangeText={setJob} placeholder="Enter Job Position" />
+      <TextInput style={styles.input} value={job} onChangeText={setJob} placeholder="Enter Job Title" />
       <Text style={styles.label}>Department:</Text>
       <Picker selectedValue={departmentId} onValueChange={setDepartmentId} style={styles.picker}>
         <Picker.Item label="Select Department" value={null} />
@@ -101,7 +125,14 @@ export default function UpdateEmployee({ route, navigation }) {
           <Picker.Item key={dept.id} label={dept.name} value={dept.id} />
         ))}
       </Picker>
-      <Button title="Update" onPress={handleSave} />
+      <Text style={styles.label}>Job Position:</Text>
+      <Picker selectedValue={jobId} onValueChange={setJobId} style={styles.picker}>
+        <Picker.Item label="Select Job Position" value={null} />
+        {jobPositions.map((job) => (
+          <Picker.Item key={job.id} label={job.name} value={job.id} />
+        ))}
+      </Picker>
+      <Button title="Update" onPress={handleSave}/>
     </View>
   );
 }
@@ -119,10 +150,11 @@ const styles = StyleSheet.create({
   },
   picker: {
     width: '100%',
-    height: 50,
+    height: 55,
     borderWidth: 1,
     borderColor: '#ccc',
     marginBottom: 16,
+    backgroundColor: 'lightgray',
   },
   image: {
     width: 150,
