@@ -7,6 +7,8 @@ import Employees from './Employees';
 import Enregistrement from './Enregistrement';
 import UpdateEmployee from './UpdateEmployee';
 import EmployeeDetail from './EmployeeDetails';
+import More from './More';
+import AddJob from './AddJob';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +26,7 @@ export default function App() {
         <Stack.Screen name="Enregistrement" component={Enregistrement} />
         <Stack.Screen name="UpdateEmployee" component={UpdateEmployee} />
         <Stack.Screen name="EmployeeDetail" component={EmployeeDetail} />
+        <Stack.Screen name="AddJob" component={AddJob} />
       </Stack.Navigator>
     </NavigationContainer>
   );

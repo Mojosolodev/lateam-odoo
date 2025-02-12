@@ -6,6 +6,8 @@ import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
 import Employees from './Employees';
+import More from './More';
+import Jobs from './Jobs';
 
 const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
@@ -132,6 +134,30 @@ export default function HomeScreen({ route }) {
           title: 'Employees',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Jobs"
+        component={(props) => (
+          <Jobs {...props} route={{ params: { odooUrl, odooDb, odooUsername, odooPassword } }} />
+        )}
+        options={{
+          title: 'Jobs',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="briefcase" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="More"
+        component={(props) => (
+          <More {...props} route={{ params: { odooUrl, odooDb, odooUsername, odooPassword } }} />
+        )}
+        options={{
+          title: 'More',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid" size={size} color={color} />
           ),
         }}
       />
