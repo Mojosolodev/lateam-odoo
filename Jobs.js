@@ -12,10 +12,11 @@ const client = wrapper(axios.create({ jar, withCredentials: true }));
 export default function Jobs({ route }) {
   const { odooUrl, odooDb, odooUsername, odooPassword } = route.params || {};
   const [jobPositionCount, setJobPositionCount] = useState(null);
+  const [departmentCount, setDepartmentCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
-  async function fetchJobCount() {
+  async function fetchCounts() {
     try {
       setLoading(true);
       const authResponse = await client.post(`${odooUrl}web/session/authenticate`, {
@@ -28,7 +29,7 @@ export default function Jobs({ route }) {
         return;
       }
 
-      const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
+      const jobResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
         jsonrpc: '2.0',
         method: 'call',
         params: {
@@ -39,13 +40,25 @@ export default function Jobs({ route }) {
         },
       });
 
-      if (response.data.result) {
-        setJobPositionCount(response.data.result);
-      } else {
-        Alert.alert('Erreur', 'Impossible de récupérer le nombre de postes.');
+      const departmentResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.department',
+          method: 'search_count',
+          args: [[]],
+          kwargs: {},
+        },
+      });
+
+      if (jobResponse.data.result) {
+        setJobPositionCount(jobResponse.data.result);
+      }
+      if (departmentResponse.data.result) {
+        setDepartmentCount(departmentResponse.data.result);
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération des postes:', error.response?.data || error.message);
+      console.error('Erreur lors de la récupération des données:', error.response?.data || error.message);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la récupération des données.');
     } finally {
       setLoading(false);
@@ -53,11 +66,11 @@ export default function Jobs({ route }) {
   }
 
   useEffect(() => {
-    fetchJobCount();
+    fetchCounts();
 
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={fetchJobCount} style={{ marginRight: 26 }}>
+        <TouchableOpacity onPress={fetchCounts} style={{ marginRight: 26 }}>
           <MaterialIcons name="refresh" size={28} color="black" />
         </TouchableOpacity>
       ),
@@ -69,16 +82,34 @@ export default function Jobs({ route }) {
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Total Job Positions</Text>
-          <Text style={styles.cardCount}>{jobPositionCount}</Text>
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => navigation.navigate('AddJob', { odooUrl, odooDb, odooUsername, odooPassword })}
-          >
-            <Text style={styles.buttonText}>Add New Job</Text>
-          </TouchableOpacity>
-        </View>
+        <>
+          <View style={styles.cardContainer}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Total Job Positions</Text>
+              <Text style={styles.cardCount}>{jobPositionCount}</Text>
+              <TouchableOpacity
+                style={styles.fab}
+                onPress={() => navigation.navigate('AddJob', { odooUrl, odooDb, odooUsername, odooPassword })}
+              >
+                <MaterialIcons name="add" size={30} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Total Departments</Text>
+              <Text style={styles.cardCount}>{departmentCount}</Text>
+              <TouchableOpacity
+                style={styles.fab}
+                onPress={() => navigation.navigate('AddDepartment', { odooUrl, odooDb, odooUsername, odooPassword })}
+              >
+                <MaterialIcons name="add" size={30} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View>
+            <Text>List of Departments</Text>
+
+          </View>
+        </>
       )}
     </View>
   );
@@ -87,24 +118,31 @@ export default function Jobs({ route }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: '#f0f4f8',
     padding: 20,
   },
+  cardContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: 800,
+    marginTop: 20,
+  },
   card: {
-    padding: 20,
+    flex: 1,
+    top: -15,
+    padding: 1,
     borderRadius: 15,
     backgroundColor: '#ffffff',
     elevation: 5,
     alignItems: 'center',
-    width: '90%',
-    maxWidth: 400,
+    marginHorizontal: 5,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
-    marginBottom: 10,
   },
   cardTitle: {
     fontSize: 22,
@@ -118,16 +156,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
-  button: {
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
+  fab: {
+    backgroundColor: '#FFA500',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+    top: -5,
   },
 });
