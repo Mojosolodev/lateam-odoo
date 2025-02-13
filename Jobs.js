@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
@@ -13,6 +13,7 @@ export default function Jobs({ route }) {
   const { odooUrl, odooDb, odooUsername, odooPassword } = route.params || {};
   const [jobPositionCount, setJobPositionCount] = useState(null);
   const [departmentCount, setDepartmentCount] = useState(null);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
@@ -65,12 +66,32 @@ export default function Jobs({ route }) {
     }
   }
 
+  async function fetchDepartments() {
+    try {
+      const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.department',
+          method: 'search_read',
+          args: [[], ['id', 'name']],
+          kwargs: {},
+        },
+      });
+      if (response.data.result) {
+        setDepartments(response.data.result);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  }
+
   useEffect(() => {
     fetchCounts();
-
+    fetchDepartments();
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={fetchCounts} style={{ marginRight: 26 }}>
+        <TouchableOpacity onPress={()=>{fetchCounts(),fetchDepartments()}} style={{ marginRight: 26 }}>
           <MaterialIcons name="refresh" size={28} color="black" />
         </TouchableOpacity>
       ),
@@ -105,10 +126,17 @@ export default function Jobs({ route }) {
               </TouchableOpacity>
             </View>
           </View>
-          <View>
-            <Text>List of Departments</Text>
-
-          </View>
+          <Text style={styles.listTitle}>List of Departments</Text>
+          <FlatList
+            data={departments}
+            style={styles.listContainer}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.listItem}>
+                <Text>{item.name}</Text>
+              </View>
+            )}
+          />
         </>
       )}
     </View>
@@ -132,8 +160,8 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    top: -15,
-    padding: 1,
+    padding: 5,
+    top:-10,
     borderRadius: 15,
     backgroundColor: '#ffffff',
     elevation: 5,
@@ -156,6 +184,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
+  listTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom:10,
+  },
+  listContainer: {
+    flex: 1,
+    width: '110%',
+  },
+  listItem: {
+    padding: 15,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    width: '90%',
+    alignSelf: 'center',
+  },
   fab: {
     backgroundColor: '#FFA500',
     width: 56,
@@ -170,4 +222,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     top: -5,
   },
+
 });
