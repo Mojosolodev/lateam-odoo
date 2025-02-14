@@ -1,7 +1,7 @@
 # HR management Mobile App
 # Application de Gesiton du Personnel
-# Work in progess
-![image](https://github.com/user-attachments/assets/14a26528-d3b3-43f7-977e-35525169d09f)
+# (Work in progess)
+![1](https://github.com/user-attachments/assets/e01f533a-b944-4703-9472-bd2c9558b592)
 ![2](https://github.com/user-attachments/assets/bc2bdd69-6f90-47fe-9413-079fd713aeb6)
 ![5](https://github.com/user-attachments/assets/f9f9fedd-dd76-4137-be69-b33216e7ada7)
 ![6](https://github.com/user-attachments/assets/709efbb2-d5aa-4ff0-bdf1-9ed5c6034a27)
