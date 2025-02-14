@@ -5,6 +5,7 @@ import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Button } from 'react-native-paper';
 
 const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
@@ -65,6 +66,31 @@ export default function Jobs({ route }) {
       setLoading(false);
     }
   }
+  async function fetchEmployeeCounts(departments) {
+    try {
+      const counts = await Promise.all(
+        departments.map(async (dept) => {
+          const response = await client.post(`${odooUrl}web/dataset/call_kw`, {
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+              model: 'hr.employee',
+              method: 'search_count',
+              args: [[['department_id', '=', dept.id]]], // Count employees in this department
+              kwargs: {},
+            },
+          });
+
+          return { ...dept, employeeCount: response.data.result || 0 };
+        })
+      );
+
+      setDepartments(counts);
+    } catch (error) {
+      console.error("Error fetching employee counts:", error);
+    }
+  }
+
 
   async function fetchDepartments() {
     try {
@@ -78,20 +104,25 @@ export default function Jobs({ route }) {
           kwargs: {},
         },
       });
+
       if (response.data.result) {
-        setDepartments(response.data.result);
+        console.log("Fetched Departments:", response.data.result);
+        fetchEmployeeCounts(response.data.result);
       }
     } catch (error) {
       console.error('Error fetching departments:', error);
     }
   }
 
+
+
+
   useEffect(() => {
     fetchCounts();
     fetchDepartments();
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={()=>{fetchCounts(),fetchDepartments()}} style={{ marginRight: 26 }}>
+        <TouchableOpacity onPress={() => { fetchCounts(), fetchDepartments() }} style={{ marginRight: 26 }}>
           <MaterialIcons name="refresh" size={28} color="black" />
         </TouchableOpacity>
       ),
@@ -126,15 +157,23 @@ export default function Jobs({ route }) {
               </TouchableOpacity>
             </View>
           </View>
-          <Text style={styles.listTitle}>List of Departments</Text>
+          <View style={styles.choicesContainer}>
+            <TouchableOpacity style={styles.choiceButton}>
+              <Text style={styles.choiceButtonText}>Jobs</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.choiceButton}>
+              <Text style={styles.choiceButtonText}>Departments</Text>
+            </TouchableOpacity>
+          </View>
           <FlatList
             data={departments}
             style={styles.listContainer}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <View style={styles.listItem}>
-                <Text>{item.name}</Text>
-              </View>
+              <TouchableOpacity style={styles.listItem}>
+                <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{item.name}</Text>
+                <Text style={{ fontSize: 15, color: 'blue' }}>({item.employeeCount} employees)</Text>
+              </TouchableOpacity>
             )}
           />
         </>
@@ -161,7 +200,7 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     padding: 5,
-    top:-10,
+    top: -30,
     borderRadius: 15,
     backgroundColor: '#ffffff',
     elevation: 5,
@@ -185,17 +224,14 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   listTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom:10,
+    fontSize: 4,
   },
   listContainer: {
     flex: 1,
     width: '110%',
   },
   listItem: {
-    padding: 15,
+    padding: 25,
     marginVertical: 8,
     marginHorizontal: 16,
     backgroundColor: '#ffffff',
@@ -222,5 +258,27 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     top: -5,
   },
-
+  choicesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    top:-10,
+  },
+  choiceButton: {
+    padding: 5,
+    marginHorizontal: 20,
+    backgroundColor: '#007bff',
+    borderRadius: 10,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    width: '40%',
+    alignSelf: 'center',
+  },
+  choiceButtonText: {
+    textAlign: 'center',
+    color: 'yellow',
+    fontWeight: 'bold',
+  },
 });
