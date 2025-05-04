@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOp
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons,FontAwesome } from '@expo/vector-icons';
 
 // Wrap Axios with cookie jar support
 const jar = new CookieJar();
@@ -171,7 +171,7 @@ export default function Employees({ route, navigation }) {
     })
   }
 >
-  <MaterialIcons name="edit" size={24} color="#007bff" style={styles.icon} />
+  <FontAwesome name="edit" size={24} color="#007bff" style={styles.icon} />
 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDelete(item)}>
                   <MaterialIcons name="delete" size={24} color="#ff3d00" style={styles.icon} />

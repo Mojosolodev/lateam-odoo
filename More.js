@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const options = [
   { id: '1', title: 'Profile', icon: 'person-circle', description: 'Manage your profile', color: '#90EE90' },
-  { id: '2', title: 'Settings', icon: 'settings', description: 'Adjust preferences', color: '#D3D3D3' },
+  //{ id: '2', title: 'Settings', icon: 'settings', description: 'Adjust preferences', color: '#D3D3D3' },
   { id: '3', title: 'Projects', icon: 'folder', description: 'Manage Projects', color: '#FFFF00' },
   { id: '4', title: 'Help', icon: 'help-circle', description: 'Get support', color: '#00FFFF' },
   { id: '5', title: 'About Us', icon: 'information-circle', description: 'Learn more about us' },

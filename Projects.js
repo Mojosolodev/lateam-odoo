@@ -12,7 +12,7 @@ import moment from 'moment';
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 
 const cookieJar = new CookieJar();
 const client = wrapper(axios.create({
@@ -56,7 +56,7 @@ export default function Projects({ route, navigation }) {
             ]
         );
     };
-    
+
 
     const fetchProjects = useCallback(async () => {
         console.log('🔄 Refresh triggered');
@@ -113,14 +113,14 @@ export default function Projects({ route, navigation }) {
 
             const result = projectResponse.data.result;
 
-            // Fetch approved tasks
+            // Fetch done(completed) tasks
             const taskResponse = await client.post(`${odooUrl}web/dataset/call_kw`, {
                 jsonrpc: '2.0',
                 method: 'call',
                 params: {
                     model: 'project.task',
                     method: 'search_read',
-                    args: [[['state', 'ilike', 'approved']]],
+                    args: [[['state', 'ilike', 'done']]],
                     kwargs: {
                         fields: ['id', 'project_id'],
                     },
@@ -129,15 +129,15 @@ export default function Projects({ route, navigation }) {
 
             console.log('✅ Task fetch response:', taskResponse.data);
 
-            let approvedTasks = taskResponse.data.result;
+            let completedTasks = taskResponse.data.result;
 
-            if (!Array.isArray(approvedTasks)) {
+            if (!Array.isArray(completedTasks)) {
                 console.log('❌ Unexpected task response:', taskResponse.data);
-                approvedTasks = []; // prevent crash
+                completedTasks = []; // prevent crash
             }
 
-            // Count approved tasks per project
-            const approvedTaskCounts = approvedTasks.reduce((acc, task) => {
+            // Count done tasks per project
+            const completedTaskCounts = completedTasks.reduce((acc, task) => {
                 const projectId = task.project_id?.[0];
                 if (projectId) {
                     acc[projectId] = (acc[projectId] || 0) + 1;
@@ -145,10 +145,10 @@ export default function Projects({ route, navigation }) {
                 return acc;
             }, {});
 
-            // Merge approved count into projects
+            // Merge done count into projects
             const enhancedProjects = result.map(project => ({
                 ...project,
-                approved_task_count: approvedTaskCounts[project.id] || 0,
+                completed_task_count: completedTaskCounts[project.id] || 0,
             }));
 
             setProjects(enhancedProjects);
@@ -190,17 +190,51 @@ export default function Projects({ route, navigation }) {
                     data={projects}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <View style={styles.card}>
+                        <TouchableOpacity
+                            style={styles.card}
+                            onPress={() =>
+                                navigation.navigate('Tasks', {
+                                    projectId: item.id,
+                                    projectName: item.name,
+                                    odooUrl,
+                                    odooDb,
+                                    odooUsername,
+                                    odooPassword,
+                                })
+                            }
+                        >
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Text style={styles.name}>{item.name}</Text>
-                                <TouchableOpacity onPress={() => deleteProject(item.id)}>
-                                    <MaterialIcons name="delete" size={24} color="red" />
-                                </TouchableOpacity>
+
+                                {/* Button group */}
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <TouchableOpacity
+                                        style={{ marginRight: 14 }}
+                                        onPress={() => navigation.navigate('EditProject', {
+                                            odooUrl,
+                                            odooDb,
+                                            odooUsername,
+                                            odooPassword,
+                                            projectId: item.id,
+                                            name: item.name,
+                                            date_start: item.date_start,
+                                            date: item.date,
+                                            user_id: item.user_id?.[0],
+                                        })}
+                                    >
+                                        <FontAwesome name="edit" size={28} color="orange" />
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity onPress={() => deleteProject(item.id)}>
+                                        <MaterialIcons name="delete" size={28} color="red" />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
+
                             <Text style={styles.id}>ID: {item.id}</Text>
                             <Text style={styles.tasks}>Tasks: {item.task_count ?? 0}</Text>
-                            <Text style={styles.approved}>
-                                Approved Tasks: {item.approved_task_count}
+                            <Text style={styles.completed}>
+                                Completed Tasks: {item.completed_task_count}
                             </Text>
                             <Text style={styles.date}>
                                 Start: <Text style={styles.startDate}>{item.date_start ? moment(item.date_start).format(' D MMM, YYYY') : 'N/A'}</Text>
@@ -211,9 +245,10 @@ export default function Projects({ route, navigation }) {
                             <Text style={styles.manager}>
                                 Manager: {item.user_id?.[1] ?? 'Unassigned'}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     )}
-                    
+
+
                 />
             ) : (
                 <Text style={styles.noData}>No projects found.</Text>
@@ -247,7 +282,7 @@ const styles = StyleSheet.create({
     id: { fontSize: 14, color: '#666', marginTop: 4 },
     noData: { fontSize: 16, color: '#888', textAlign: 'center', marginTop: 20 },
     tasks: { fontSize: 16, color: '#FFA500', marginTop: 4 },
-    approved: { fontSize: 15, color: '#28a745', marginTop: 4 },
+    completed: { fontSize: 15, color: '#28a745', marginTop: 4 },
     date: { fontSize: 15, color: '#555', marginTop: 4 },
     startDate: { color: '#90EE90', fontWeight: 'bold' },
     endDate: { color: '#dc3545', fontWeight: 'bold' },
@@ -264,5 +299,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         elevation: 8,
     },
-    
+
 });
