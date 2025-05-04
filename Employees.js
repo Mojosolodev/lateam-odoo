@@ -202,7 +202,7 @@ export default function Employees({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, padding: 16, backgroundColor: '#e6ffff' },
   employeeCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginVertical: 8,
     borderRadius: 8,
-    elevation: 3,
+    elevation: 5,
   },
   employeeInfo: {
     flexDirection: 'row',

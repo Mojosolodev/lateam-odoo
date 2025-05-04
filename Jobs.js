@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#f0f4f8',
+    backgroundColor: '#e6ffff',
     padding: 20,
   },
   cardContainer: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     backgroundColor: '#ffffff',
     borderRadius: 10,
-    elevation: 3,
+    elevation: 5,
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 5,

@@ -3,38 +3,50 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react
 import { Ionicons } from '@expo/vector-icons';
 
 const options = [
-  { id: '1', title: 'Profile', icon: 'person-circle', description: 'Manage your profile' },
-  { id: '2', title: 'Settings', icon: 'settings', description: 'Adjust preferences' },
-  { id: '3', title: 'Notifications', icon: 'notifications', description: 'View alerts' },
-  { id: '4', title: 'Help', icon: 'help-circle', description: 'Get support' },
+  { id: '1', title: 'Profile', icon: 'person-circle', description: 'Manage your profile', color: '#90EE90' },
+  { id: '2', title: 'Settings', icon: 'settings', description: 'Adjust preferences', color: '#D3D3D3' },
+  { id: '3', title: 'Projects', icon: 'folder', description: 'Manage Projects', color: '#FFFF00' },
+  { id: '4', title: 'Help', icon: 'help-circle', description: 'Get support', color: '#00FFFF' },
   { id: '5', title: 'About Us', icon: 'information-circle', description: 'Learn more about us' },
   { id: '6', title: 'Logout', icon: 'log-out', description: 'Sign out of your account', color: '#ff4d4d' },
 ];
 
-export default function More({ navigation }) {
-    const handlePress = (item) => {
-        if (item.title === 'Logout') {
-          Alert.alert(
-            "Confirm Logout",
-            "Are you sure you want to log out?",
-            [
-              { text: "Cancel", style: "cancel" },
-              { 
-                text: "Yes", 
-                onPress: () => {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'Login' }], // Réinitialisation de la navigation
-                  });
-                }
-              },
-            ]
-          );
-        } else {
-          alert(`Navigating to ${item.title}`);
-        }
-      };
-      
+export default function More({ navigation, route }) {
+  const { odooUrl, odooDb, odooUsername, odooPassword } = route.params;
+
+  const handlePress = (item) => {
+    if (item.title === 'Logout') {
+      Alert.alert(
+        "Confirm Logout",
+        "Are you sure you want to log out?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Yes",
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }], // Réinitialisation de la navigation
+              });
+            }
+          },
+        ]
+      );
+    } else {
+      if (item.title === 'Projects') {
+        navigation.navigate('Projects', {
+          odooUrl,
+          odooDb,
+          odooUsername,
+          odooPassword,
+        })
+      } else {
+        alert(`Navigating to ${item.title}`);
+      }
+
+    }
+  };
+
 
   const renderItem = ({ item }) => (
     <TouchableOpacity

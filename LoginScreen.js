@@ -27,7 +27,7 @@ export default function LoginScreen({navigation}) {
       });
 
       if (response.data && response.data.result) {
-        Alert.alert('Connected Successfully', 'You are now authenticated.');
+        Alert.alert('Connected Successfully', 'Welcome or Welcome Back.');
         navigation.navigate('Home', {
           odooUrl: serverAddress,
           odooDb: database,
@@ -41,7 +41,7 @@ export default function LoginScreen({navigation}) {
       }
     } catch (error) {
       console.error('Error authenticating with Odoo API:', error.response?.data || error.message);
-      Alert.alert('Error', 'Connect to Odoo Failed. Please try again.');
+      Alert.alert('Error', 'Connect to company Failed. Please try again.');
     }
   }
 
@@ -81,7 +81,7 @@ export default function LoginScreen({navigation}) {
         onChangeText={setPassword}
       />
       <TouchableOpacity style={styles.button} onPress={authenticate}>
-        <Text style={styles.buttonText}>Connect Odoo</Text>
+        <Text style={styles.buttonText}>Connect Company</Text>
       </TouchableOpacity>
       {/* <TouchableOpacity onPress={handleCreateAccount}>
         <Text style={styles.createAccountText}>Créer un compte</Text>

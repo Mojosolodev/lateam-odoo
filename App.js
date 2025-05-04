@@ -10,6 +10,8 @@ import EmployeeDetail from './EmployeeDetails';
 import More from './More';
 import AddJob from './AddJob';
 import AddDepartment from './AddDepartment';
+import Projects from './Projects';
+import AddProject from './AddProject';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +31,8 @@ export default function App() {
         <Stack.Screen name="EmployeeDetail" component={EmployeeDetail} />
         <Stack.Screen name="AddJob" component={AddJob} />
         <Stack.Screen name="AddDepartment" component={AddDepartment} />
+        <Stack.Screen name="Projects" component={Projects} />
+        <Stack.Screen name="AddProject" component={AddProject} />
       </Stack.Navigator>
     </NavigationContainer>
   );
