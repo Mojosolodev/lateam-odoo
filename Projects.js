@@ -26,6 +26,38 @@ export default function Projects({ route, navigation }) {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const deleteProject = async (projectId) => {
+        Alert.alert(
+            "Confirm Delete",
+            "Are you sure you want to delete this project?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete", style: "destructive", onPress: async () => {
+                        try {
+                            await client.post(`${odooUrl}web/dataset/call_kw`, {
+                                jsonrpc: "2.0",
+                                method: "call",
+                                params: {
+                                    model: "project.project",
+                                    method: "unlink",
+                                    args: [[projectId]],
+                                    kwargs: {},
+                                },
+                            });
+                            setProjects(prev => prev.filter(p => p.id !== projectId));
+                            Alert.alert("Success", "Project deleted successfully.");
+                        } catch (error) {
+                            console.error("Delete error:", error.response?.data || error.message);
+                            Alert.alert("Error", "Failed to delete project.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+    
+
     const fetchProjects = useCallback(async () => {
         console.log('🔄 Refresh triggered');
 
@@ -159,7 +191,12 @@ export default function Projects({ route, navigation }) {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.card}>
-                            <Text style={styles.name}>{item.name}</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text style={styles.name}>{item.name}</Text>
+                                <TouchableOpacity onPress={() => deleteProject(item.id)}>
+                                    <MaterialIcons name="delete" size={24} color="red" />
+                                </TouchableOpacity>
+                            </View>
                             <Text style={styles.id}>ID: {item.id}</Text>
                             <Text style={styles.tasks}>Tasks: {item.task_count ?? 0}</Text>
                             <Text style={styles.approved}>
@@ -176,6 +213,7 @@ export default function Projects({ route, navigation }) {
                             </Text>
                         </View>
                     )}
+                    
                 />
             ) : (
                 <Text style={styles.noData}>No projects found.</Text>
