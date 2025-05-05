@@ -79,6 +79,10 @@ function Dashboard({ route }) {
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
         <>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Manage your Company with Ease</Text>
+            <Text style={styles.headerSubtitle}>Real-time insights. Smarter decisions.</Text>
+          </View>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Total Employees</Text>
             <Text style={styles.cardCount}>{employeeCount}</Text>
@@ -206,4 +210,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4f8',
     zIndex: 1000,
   },
+  header: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#007bff',
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  
 });

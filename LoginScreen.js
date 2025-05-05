@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Image } from 'react-native';
+import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
 
-export default function LoginScreen({navigation}) {
+export default function LoginScreen({ navigation }) {
 
   const [serverAddress, setServerAddress] = useState('');
   const [database, setDatabase] = useState('');
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
 
   async function authenticate() {
+    setLoading(true); // Start loading
     const authData = {
       jsonrpc: "2.0",
       method: "call",
@@ -34,7 +37,7 @@ export default function LoginScreen({navigation}) {
           odooUsername: emailOrUsername,
           odooPassword: password,
         });
-      } else if (response.data && response.data.error && response.data.error.data.name === 'odoo.exceptions.AccessDenied') {
+      } else if (response.data?.error?.data?.name === 'odoo.exceptions.AccessDenied') {
         Alert.alert('Wrong Credentials', 'Access Denied. Please check your username or password.');
       } else {
         Alert.alert('Error', 'Wrong Credentials.\nPlease Retry');
@@ -42,8 +45,11 @@ export default function LoginScreen({navigation}) {
     } catch (error) {
       console.error('Error authenticating with Odoo API:', error.response?.data || error.message);
       Alert.alert('Error', 'Connect to company Failed. Please try again.');
+    } finally {
+      setLoading(false); // Stop loading
     }
   }
+
 
   const handleCreateAccount = () => {
     Alert.alert('Redirect', 'Redirecting to create account screen...');
@@ -51,7 +57,7 @@ export default function LoginScreen({navigation}) {
 
   return (
     <View style={styles.container}>
-      <Image 
+      <Image
         source={require('./images/laTeam noBG.png')} // Adjust the path if necessary
         style={styles.logo}
       />
@@ -80,9 +86,18 @@ export default function LoginScreen({navigation}) {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableOpacity style={styles.button} onPress={authenticate}>
-        <Text style={styles.buttonText}>Connect Company</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={authenticate}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Connect Company</Text>
+        )}
       </TouchableOpacity>
+
       {/* <TouchableOpacity onPress={handleCreateAccount}>
         <Text style={styles.createAccountText}>Créer un compte</Text>
       </TouchableOpacity> */}

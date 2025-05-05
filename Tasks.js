@@ -13,6 +13,9 @@ import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 
 const cookieJar = new CookieJar();
 const client = wrapper(axios.create({
@@ -21,7 +24,7 @@ const client = wrapper(axios.create({
     jar: cookieJar,
 }));
 
-export default function Tasks({ route }) {
+export default function Tasks({ route, navigation }) {
     const { odooUrl, odooDb, odooUsername, odooPassword, projectId, projectName } = route.params;
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -94,10 +97,12 @@ export default function Tasks({ route }) {
         }
     };
 
-    useEffect(() => {
-        fetchTasks();
-    }, []);
-
+    useFocusEffect(
+        useCallback(() => {
+            fetchTasks();
+        }, [])
+    );
+    
     const formatState = (state) => {
         if (!state) return '';
         const cleanedState = state.replace(/^\d+_/, ''); // Cleans up state like '05_done'
@@ -109,8 +114,8 @@ export default function Tasks({ route }) {
         if (cleanedState === 'done') return 'done'; // Special case for 'done'
         return map[cleanedState] || cleanedState.replace(/_/g, ' ');
     };
-    
-    
+
+
 
     const confirmDeleteTask = (taskId) => {
         Alert.alert(
@@ -168,7 +173,7 @@ export default function Tasks({ route }) {
     const updateTaskStatus = async (taskId, newStateKey) => {
         try {
             setLoading(true);
-    
+
             if (newStateKey === 'done') {
                 // Appel de la méthode action_done
                 await client.post(`${odooUrl}web/dataset/call_kw`, {
@@ -181,7 +186,7 @@ export default function Tasks({ route }) {
                         kwargs: {},
                     },
                 });
-    
+
                 // Mise à jour locale
                 setTasks(prevTasks =>
                     prevTasks.map(task =>
@@ -200,7 +205,7 @@ export default function Tasks({ route }) {
                         kwargs: {},
                     },
                 });
-    
+
                 setTasks(prevTasks =>
                     prevTasks.map(task =>
                         task.id === taskId ? { ...task, state: newStateValue } : task
@@ -214,7 +219,7 @@ export default function Tasks({ route }) {
             setLoading(false);
         }
     };
-    
+
 
     const action_done = async (taskId) => {
         try {
@@ -230,7 +235,7 @@ export default function Tasks({ route }) {
                 },
             });
             console.log("action_done response", response); // Debugging response
-    
+
             // Update the task locally with the correct state '05_done'
             setTasks(prevTasks =>
                 prevTasks.map(task =>
@@ -244,8 +249,8 @@ export default function Tasks({ route }) {
             setLoading(false);
         }
     };
-    
-    
+
+
 
     return (
         <View style={styles.container}>
@@ -292,6 +297,16 @@ export default function Tasks({ route }) {
                     )}
                 />
             )}
+            <TouchableOpacity
+                style={styles.fab}
+                onPress={() => {
+                    // Pass all route params to AddTask screen
+                    navigation.navigate('AddTask', route.params);
+                }}
+            >
+                <MaterialIcons name="add" size={28} color="white" />
+            </TouchableOpacity>
+
         </View>
     );
 }
@@ -336,4 +351,17 @@ const styles = StyleSheet.create({
         color: 'blue',
         fontWeight: 'bold',
     },
+    fab: {
+        position: 'absolute',
+        right: 20,
+        bottom: 30,
+        backgroundColor: '#007bff',
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 8,
+    },
+    
 });
