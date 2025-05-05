@@ -1,0 +1,177 @@
+// Documents.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, Linking, TouchableOpacity } from 'react-native';
+
+export default function Documents({ route }) {
+    const { jobId, jobTitle, odooUrl, odooDb, odooUsername, odooPassword } = route.params;
+    const [documents, setDocuments] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchDocuments();
+    }, []);
+
+    const fetchDocuments = async () => {
+        try {
+          // Step 1: Authenticate
+          const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'call',
+              id: 1,
+              params: {
+                service: 'common',
+                method: 'login',
+                args: [odooDb, odooUsername, odooPassword],
+              },
+            }),
+          });
+      
+          const loginData = await loginRes.json();
+          const uid = loginData.result;
+          if (!uid) throw new Error("Login failed");
+      
+          // Step 2: Get applicant IDs for this job
+          const applicants = await callOdoo({
+            url: odooUrl,
+            db: odooDb,
+            uid,
+            password: odooPassword,
+            model: 'hr.applicant',
+            method: 'search_read',
+            args: [[['job_id', '=', parseInt(jobId)]]],
+            kwargs: { fields: ['id'] },
+          });
+      
+          const applicantIds = applicants.map((a) => a.id);
+          if (applicantIds.length === 0) {
+            setDocuments([]);
+            setLoading(false);
+            return;
+          }
+      
+          // Step 3: Get related attachments (only safe fields)
+          const docs = await callOdoo({
+            url: odooUrl,
+            db: odooDb,
+            uid,
+            password: odooPassword,
+            model: 'ir.attachment',
+            method: 'search_read',
+            args: [[
+              ['res_model', '=', 'hr.applicant'],
+              ['res_id', 'in', applicantIds]
+            ]],
+            kwargs: {
+              fields: ['id', 'name', 'res_name'],  // safe, readable fields
+            },
+          });
+      
+          const docList = docs.map((doc) => ({
+            name: doc.name,
+            url: `${odooUrl}/web/content/${doc.id}?download=true`,
+            applicant: doc.res_name || 'Unknown',
+          }));
+      
+          setDocuments(docList);
+        } catch (error) {
+          console.error('Odoo Error:', error);
+          Alert.alert("Odoo Server Error", error.message || "Failed to fetch documents.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+
+
+
+    const callOdoo = async ({ url, db, uid, password, model, method, args, kwargs = {} }) => {
+        const res = await fetch(`${url}/jsonrpc`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'call',
+                id: Math.floor(Math.random() * 1000),
+                params: {
+                    service: 'object',
+                    method: 'execute_kw',
+                    args: [db, uid, password, model, method, args, kwargs],
+                },
+            }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.result;
+    };
+
+    const renderItem = ({ item }) => (
+        <TouchableOpacity onPress={() => Linking.openURL(item.url)} style={styles.docCard}>
+            <Text style={styles.docName}>{item.name}</Text>
+            <Text style={styles.docMeta}>Type: {item.type}</Text>
+            <Text style={styles.docMeta}>Applicant: {item.applicant}</Text>
+            <Text style={styles.docLink}>Tap to open</Text>
+        </TouchableOpacity>
+    );
+
+    return (
+        <View style={styles.container}>
+            <Text style={styles.header}>Documents for: {jobTitle}</Text>
+            {loading ? (
+                <ActivityIndicator size="large" color="#007bff" />
+            ) : documents.length === 0 ? (
+                <Text style={styles.noDocs}>No documents found.</Text>
+            ) : (
+                <FlatList
+                    data={documents}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={renderItem}
+                />
+            )}
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: '#f8f9fa',
+    },
+    header: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    docCard: {
+        backgroundColor: '#ffffff',
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 12,
+        elevation: 2,
+    },
+    docName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    docMeta: {
+        fontSize: 13,
+        color: '#444',
+        marginTop: 3,
+    },
+    docLink: {
+        marginTop: 6,
+        fontSize: 13,
+        color: '#007bff',
+        textDecorationLine: 'underline',
+    },
+    noDocs: {
+        textAlign: 'center',
+        fontSize: 16,
+        color: '#999',
+        marginTop: 30,
+    },
+});

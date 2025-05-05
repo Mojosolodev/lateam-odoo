@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 const options = [
   { id: '1', title: 'Profile', icon: 'person-circle', description: 'Manage your profile', color: '#90EE90' },
-  //{ id: '2', title: 'Settings', icon: 'settings', description: 'Adjust preferences', color: '#D3D3D3' },
+  { id: '2', title: 'Recrutement', icon: 'people', description: 'Hire new Employees', color: '#D3D3D3' },
   { id: '3', title: 'Projects', icon: 'folder', description: 'Manage Projects', color: '#FFFF00' },
-  { id: '4', title: 'Help', icon: 'help-circle', description: 'Get support', color: '#00FFFF' },
+  { id: '4', title: 'Tracking', icon: 'location-sharp', description: 'Find a place using Augmented Reality', color: '#00FFFF' },
   { id: '5', title: 'About Us', icon: 'information-circle', description: 'Learn more about us' },
   { id: '6', title: 'Logout', icon: 'log-out', description: 'Sign out of your account', color: '#ff4d4d' },
 ];
@@ -40,7 +40,23 @@ export default function More({ navigation, route }) {
           odooUsername,
           odooPassword,
         })
-      } else {
+      } 
+      else if(item.title === 'About Us')
+      {
+        Alert.alert(
+          "Made By",
+          "MOFFO JOSIAS and DOMFANG CABREL",
+        );
+      }
+      else if (item.title === 'Recrutement') {
+        navigation.navigate('Recrutement', {
+          odooUrl,
+          odooDb,
+          odooUsername,
+          odooPassword,
+        });
+      }      
+      else {
         alert(`Navigating to ${item.title}`);
       }
 
