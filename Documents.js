@@ -1,6 +1,8 @@
 // Documents.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, Linking, TouchableOpacity } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function Documents({ route }) {
     const { jobId, jobTitle, odooUrl, odooDb, odooUsername, odooPassword } = route.params;
@@ -13,77 +15,81 @@ export default function Documents({ route }) {
 
     const fetchDocuments = async () => {
         try {
-          // Step 1: Authenticate
-          const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              method: 'call',
-              id: 1,
-              params: {
-                service: 'common',
-                method: 'login',
-                args: [odooDb, odooUsername, odooPassword],
-              },
-            }),
-          });
-      
-          const loginData = await loginRes.json();
-          const uid = loginData.result;
-          if (!uid) throw new Error("Login failed");
-      
-          // Step 2: Get applicant IDs for this job
-          const applicants = await callOdoo({
-            url: odooUrl,
-            db: odooDb,
-            uid,
-            password: odooPassword,
-            model: 'hr.applicant',
-            method: 'search_read',
-            args: [[['job_id', '=', parseInt(jobId)]]],
-            kwargs: { fields: ['id'] },
-          });
-      
-          const applicantIds = applicants.map((a) => a.id);
-          if (applicantIds.length === 0) {
-            setDocuments([]);
-            setLoading(false);
-            return;
-          }
-      
-          // Step 3: Get related attachments (only safe fields)
-          const docs = await callOdoo({
-            url: odooUrl,
-            db: odooDb,
-            uid,
-            password: odooPassword,
-            model: 'ir.attachment',
-            method: 'search_read',
-            args: [[
-              ['res_model', '=', 'hr.applicant'],
-              ['res_id', 'in', applicantIds]
-            ]],
-            kwargs: {
-              fields: ['id', 'name', 'res_name'],  // safe, readable fields
-            },
-          });
-      
-          const docList = docs.map((doc) => ({
-            name: doc.name,
-            url: `${odooUrl}/web/content/${doc.id}?download=true`,
-            applicant: doc.res_name || 'Unknown',
-          }));
-      
-          setDocuments(docList);
+            // Step 1: Authenticate
+            const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'call',
+                    id: 1,
+                    params: {
+                        service: 'common',
+                        method: 'login',
+                        args: [odooDb, odooUsername, odooPassword],
+                    },
+                }),
+            });
+
+            const loginData = await loginRes.json();
+            const uid = loginData.result;
+            if (!uid) throw new Error("Login failed");
+
+            // Step 2: Get applicant IDs for this job
+            const applicants = await callOdoo({
+                url: odooUrl,
+                db: odooDb,
+                uid,
+                password: odooPassword,
+                model: 'hr.applicant',
+                method: 'search_read',
+                args: [[['job_id', '=', parseInt(jobId)]]],
+                kwargs: { fields: ['id'] },
+            });
+
+            
+
+
+            const applicantIds = applicants.map((a) => a.id);
+            if (applicantIds.length === 0) {
+                setDocuments([]);
+                setLoading(false);
+                return;
+            }
+
+            // Step 3: Get related attachments (only safe fields)
+            const docs = await callOdoo({
+                url: odooUrl,
+                db: odooDb,
+                uid,
+                password: odooPassword,
+                model: 'ir.attachment',
+                method: 'search_read',
+                args: [[
+                    ['res_model', '=', 'hr.applicant'],
+                    ['res_id', 'in', applicantIds]
+                ]],
+                kwargs: {
+                    fields: ['id', 'name', 'res_name'],  // safe, readable fields
+                },
+            });
+
+            const docList = docs.map((doc) => ({
+                id: doc.id, // important!
+                name: doc.name,
+                applicant: doc.res_name || 'Unknown',
+            }));
+
+
+            setDocuments(docList);
         } catch (error) {
-          console.error('Odoo Error:', error);
-          Alert.alert("Odoo Server Error", error.message || "Failed to fetch documents.");
+            console.error('Odoo Error:', error);
+            Alert.alert("Odoo Server Error", error.message || "Failed to fetch documents.");
         } finally {
-          setLoading(false);
+            setLoading(false);
         }
-      };
-      
+    };
+
 
 
 
@@ -106,9 +112,55 @@ export default function Documents({ route }) {
         if (data.error) throw new Error(data.error.message);
         return data.result;
     };
+    const handleDownload = async (attachmentId, fileName) => {
+        try {
+            const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'call',
+                    id: 1,
+                    params: {
+                        service: 'common',
+                        method: 'login',
+                        args: [odooDb, odooUsername, odooPassword],
+                    },
+                }),
+            });
+
+            const loginData = await loginRes.json();
+            const uid = loginData.result;
+            if (!uid) throw new Error("Login failed");
+
+            const result = await callOdoo({
+                url: odooUrl,
+                db: odooDb,
+                uid,
+                password: odooPassword,
+                model: 'ir.attachment',
+                method: 'read',
+                args: [[attachmentId]],
+                kwargs: { fields: ['datas', 'name'] },
+            });
+
+            const fileData = result[0];
+            const base64Data = fileData.datas;
+            const uri = FileSystem.documentDirectory + fileName;
+
+            await FileSystem.writeAsStringAsync(uri, base64Data, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
+
+            await Sharing.shareAsync(uri);
+        } catch (error) {
+            console.error('Download error:', error);
+            Alert.alert('Error', 'Failed to download the document.');
+        }
+    };
 
     const renderItem = ({ item }) => (
-        <TouchableOpacity onPress={() => Linking.openURL(item.url)} style={styles.docCard}>
+        <TouchableOpacity onPress={() => handleDownload(item.id, item.name)} style={styles.docCard}>
             <Text style={styles.docName}>{item.name}</Text>
             <Text style={styles.docMeta}>Type: {item.type}</Text>
             <Text style={styles.docMeta}>Applicant: {item.applicant}</Text>
@@ -118,7 +170,7 @@ export default function Documents({ route }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Documents for: {jobTitle}</Text>
+            <Text style={styles.header}>Attachements : {jobTitle}</Text>
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" />
             ) : documents.length === 0 ? (

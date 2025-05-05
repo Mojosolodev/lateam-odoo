@@ -32,7 +32,9 @@
     "react-native-screens": "~4.4.0",
     "tough-cookie": "^5.1.0",
     "@react-native-community/datetimepicker": "8.2.0",
-    "expo-clipboard": "~7.0.1"
+    "expo-clipboard": "~7.0.1",
+    "expo-file-system": "~18.0.12",
+    "expo-sharing": "~13.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9"
