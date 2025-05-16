@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
+import qs from 'qs';
 
 export default function SignUpScreen({ navigation }) {
     const [database, setDatabase] = useState('');
@@ -21,22 +22,24 @@ export default function SignUpScreen({ navigation }) {
         setLoading(true);
 
         try {
-            // STEP 1: Create DB
+            //Create DB
             console.log('Creating DB...');
-            const dbRes = await axios.post(`${odooUrl}web/database/create`, {
-                jsonrpc: "2.0",
-                method: "call",
-                params: {
-                    master_pwd: adminPassword,
+            const dbRes = await axios.post(
+                `${odooUrl}web/database/create`,
+                qs.stringify({
+                    master_pwd: 'openpgpwd',
                     name: database,
                     login: emailOrUsername,
                     password: password,
-                    lang: "en_US"
-                },
-                id: new Date().getTime()
-            }, {
-                headers: { "Content-Type": "application/json" }
-            });
+                    lang: "en_US",
+                    phone: "0000000000",       // Required by Odoo's controller
+                    country_code: "us",        // Required
+                    demo: false                // Optional
+                }),
+                {
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                }
+            );
 
             if (dbRes.data.error) {
                 console.error('DB creation error:', dbRes.data.error);
@@ -46,61 +49,62 @@ export default function SignUpScreen({ navigation }) {
             console.log('DB created successfully.');
 
             // STEP 2: Login as admin in the new DB
-            console.log('Logging in as admin...');
-            const loginRes = await axios.post(`${odooUrl}web/session/authenticate`, {
-                jsonrpc: "2.0",
-                method: "call",
-                params: {
-                    db: database,
-                    login: 'admin',
-                    password: adminPassword
-                },
-                id: new Date().getTime()
-            }, {
-                headers: { "Content-Type": "application/json" }
-            });
+            // console.log('Logging in as admin...');
+            // const loginRes = await axios.post(`${odooUrl}web/session/authenticate`, {
+            //     jsonrpc: "2.0",
+            //     method: "call",
+            //     params: {
+            //         db: database,
+            //         login: emailOrUsername,
+            //         password: adminPassword
+            //     },
+            //     id: new Date().getTime()
+            // }, {
+            //     headers: { "Content-Type": "application/json" }
+            // });
 
-            const session = loginRes.data.result;
-            if (!session || !session.uid) {
-                throw new Error('Admin login failed. Cannot create user.');
-            }
+            // const session = loginRes.data.result;
+            // if (!session || !session.uid) {
+            //     throw new Error('Admin login failed. Cannot create user.');
+            // }
 
-            console.log('Logged in as admin. UID:', session.uid);
+            // console.log('Logged in as admin. UID:', session.uid);
 
             // STEP 3: Create new user in that DB
-            console.log('Creating user...');
-            const userCreate = await axios.post(`${odooUrl}web/dataset/call_kw/res.users/create`, {
-                jsonrpc: "2.0",
-                method: "call",
-                params: {
-                    model: "res.users",
-                    method: "create",
-                    args: [{
-                        name: emailOrUsername,
-                        login: emailOrUsername,
-                        password: password,
-                        email: emailOrUsername
-                    }],
-                    kwargs: {}
-                },
-                id: new Date().getTime()
-            }, {
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true
-            });
+            // console.log('Creating user...');
+            // const userCreate = await axios.post(`${odooUrl}web/dataset/call_kw/res.users/create`, {
+            //     jsonrpc: "2.0",
+            //     method: "call",
+            //     params: {
+            //         model: "res.users",
+            //         method: "create",
+            //         args: [{
+            //             name: emailOrUsername,
+            //             login: emailOrUsername,
+            //             password: password,
+            //             email: emailOrUsername
+            //         }],
+            //         kwargs: {}
+            //     },
+            //     id: new Date().getTime()
+            // }, {
+            //     headers: { "Content-Type": "application/json" },
+            //     withCredentials: true
+            // });
 
-            if (userCreate.data.error) {
-                console.error('User creation error:', userCreate.data.error);
-                throw new Error(userCreate.data.error.data.message);
-            }
+            // if (userCreate.data.error) {
+            //     console.error('User creation error:', userCreate.data.error);
+            //     throw new Error(userCreate.data.error.data.message);
+            // }
 
-            console.log('User created successfully.');
+            // console.log('User created successfully.');
 
-            Alert.alert('Success', 'Company and user created!');
+            Alert.alert('Success', 'Company Created');
             navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
 
         } catch (error) {
             console.error('Signup error:', error.response?.data || error.message);
+            console.error('Raw error:', error.toJSON?.() || error);
             Alert.alert('Signup failed', error.message || 'Check console for more info.');
         } finally {
             setLoading(false);
