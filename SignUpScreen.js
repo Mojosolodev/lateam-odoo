@@ -48,57 +48,6 @@ export default function SignUpScreen({ navigation }) {
 
             console.log('DB created successfully.');
 
-            // STEP 2: Login as admin in the new DB
-            // console.log('Logging in as admin...');
-            // const loginRes = await axios.post(`${odooUrl}web/session/authenticate`, {
-            //     jsonrpc: "2.0",
-            //     method: "call",
-            //     params: {
-            //         db: database,
-            //         login: emailOrUsername,
-            //         password: adminPassword
-            //     },
-            //     id: new Date().getTime()
-            // }, {
-            //     headers: { "Content-Type": "application/json" }
-            // });
-
-            // const session = loginRes.data.result;
-            // if (!session || !session.uid) {
-            //     throw new Error('Admin login failed. Cannot create user.');
-            // }
-
-            // console.log('Logged in as admin. UID:', session.uid);
-
-            // STEP 3: Create new user in that DB
-            // console.log('Creating user...');
-            // const userCreate = await axios.post(`${odooUrl}web/dataset/call_kw/res.users/create`, {
-            //     jsonrpc: "2.0",
-            //     method: "call",
-            //     params: {
-            //         model: "res.users",
-            //         method: "create",
-            //         args: [{
-            //             name: emailOrUsername,
-            //             login: emailOrUsername,
-            //             password: password,
-            //             email: emailOrUsername
-            //         }],
-            //         kwargs: {}
-            //     },
-            //     id: new Date().getTime()
-            // }, {
-            //     headers: { "Content-Type": "application/json" },
-            //     withCredentials: true
-            // });
-
-            // if (userCreate.data.error) {
-            //     console.error('User creation error:', userCreate.data.error);
-            //     throw new Error(userCreate.data.error.data.message);
-            // }
-
-            // console.log('User created successfully.');
-
             Alert.alert('Success', 'Company Created');
             navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
 
