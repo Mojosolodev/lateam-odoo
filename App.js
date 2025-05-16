@@ -17,6 +17,7 @@ import Tasks from './Tasks';
 import Recrutement from './Recrutement';
 import Documents from './Documents';
 import AddTask from './AddTask';
+import SignUpScreen from './SignUpScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,11 +25,20 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen
           name="Home"
           component={HomeScreen}
           options={{ headerShown: false }} // Hides the top bar for Home
+        />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false }} // hides top back button
+        />
+        <Stack.Screen
+          name="SignUp"
+          component={SignUpScreen}
+          options={{ headerShown: false }} // hides top back button
         />
         <Stack.Screen name="Employees" component={Employees} />
         <Stack.Screen name="Enregistrement" component={Enregistrement} />

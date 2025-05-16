@@ -98,9 +98,10 @@ export default function LoginScreen({ navigation }) {
         )}
       </TouchableOpacity>
 
-      {/* <TouchableOpacity onPress={handleCreateAccount}>
-        <Text style={styles.createAccountText}>Créer un compte</Text>
-      </TouchableOpacity> */}
+      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+        <Text style={styles.createAccountText}>Don't have a company? Create Company</Text>
+      </TouchableOpacity>
+
     </View>
   );
 }

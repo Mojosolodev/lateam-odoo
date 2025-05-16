@@ -158,12 +158,7 @@ export default function Jobs({ route }) {
             </View>
           </View>
           <View style={styles.choicesContainer}>
-            <TouchableOpacity style={styles.choiceButton}>
-              <Text style={styles.choiceButtonText}>Jobs</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.choiceButton}>
-              <Text style={styles.choiceButtonText}>Departments</Text>
-            </TouchableOpacity>
+              <Text style={styles.choiceButtonText}>List of departments</Text>
           </View>
           <FlatList
             data={departments}
@@ -263,22 +258,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     top:-10,
   },
-  choiceButton: {
-    padding: 5,
-    marginHorizontal: 20,
-    backgroundColor: '#007bff',
-    borderRadius: 10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    width: '40%',
-    alignSelf: 'center',
-  },
   choiceButtonText: {
     textAlign: 'center',
-    color: 'yellow',
+    color: "#007bff",
     fontWeight: 'bold',
+    fontSize:18,
   },
 });

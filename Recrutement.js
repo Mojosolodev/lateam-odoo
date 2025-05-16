@@ -203,10 +203,10 @@ export default function Recrutement({ navigation, route }) {
         >
             <View style={styles.iconRow}>
                 <TouchableOpacity onPress={() => handleCopy(item.link)} style={styles.iconButton}>
-                    <Ionicons name="copy" size={25} color="#808080" />
+                    <Ionicons name="copy" size={35} color="#808080" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleShare(item.link)} style={styles.iconButton}>
-                    <Ionicons name="share-social" size={25} color="#3333ff" />
+                    <Ionicons name="share-social" size={35} color="#3333ff" />
                 </TouchableOpacity>
             </View>
 
