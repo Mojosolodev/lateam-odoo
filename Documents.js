@@ -47,7 +47,7 @@ export default function Documents({ route }) {
                 kwargs: { fields: ['id'] },
             });
 
-            
+
 
 
             const applicantIds = applicants.map((a) => a.id);
@@ -159,14 +159,99 @@ export default function Documents({ route }) {
         }
     };
 
+    const handleHire = async (item) => {
+        try {
+            setLoading(true);
+
+            const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'call',
+                    id: 1,
+                    params: {
+                        service: 'common',
+                        method: 'login',
+                        args: [odooDb, odooUsername, odooPassword],
+                    },
+                }),
+            });
+
+            const loginData = await loginRes.json();
+            const uid = loginData.result;
+            if (!uid) throw new Error("Login failed");
+
+            // Read the attachment to get the res_id (applicant ID)
+            const attachment = await callOdoo({
+                url: odooUrl,
+                db: odooDb,
+                uid,
+                password: odooPassword,
+                model: 'ir.attachment',
+                method: 'read',
+                args: [[item.id]],
+                kwargs: { fields: ['res_id'] },
+            });
+
+            const applicantId = attachment[0].res_id;
+            if (!applicantId) throw new Error("Could not resolve applicant from attachment");
+
+            // Read applicant info
+            const applicant = await callOdoo({
+                url: odooUrl,
+                db: odooDb,
+                uid,
+                password: odooPassword,
+                model: 'hr.applicant',
+                method: 'read',
+                args: [[applicantId]],
+                kwargs: { fields: ['partner_name', 'email_from', 'job_id', 'partner_phone'] },
+            });
+
+            const applicantData = applicant[0];
+
+            // Create employee
+            const newEmployeeId = await callOdoo({
+                url: odooUrl,
+                db: odooDb,
+                uid,
+                password: odooPassword,
+                model: 'hr.employee',
+                method: 'create',
+                args: [{
+                    name: applicantData.partner_name || "Unnamed",
+                    work_email: applicantData.email_from || "",
+                    job_id: applicantData.job_id ? applicantData.job_id[0] : false,
+                    work_phone: applicantData.partner_phone || "",
+                }],
+            });
+
+
+            Alert.alert("Success", `You Hired : ${applicantData.partner_name}`);
+        } catch (error) {
+            console.error("Hire Error:", error);
+            Alert.alert("Error", error.message || "Failed to hire applicant.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     const renderItem = ({ item }) => (
-        <TouchableOpacity onPress={() => handleDownload(item.id, item.name)} style={styles.docCard}>
-            <Text style={styles.docName}>{item.name}</Text>
-            <Text style={styles.docMeta}>Type: {item.type}</Text>
-            <Text style={styles.docMeta}>Applicant: {item.applicant}</Text>
-            <Text style={styles.docLink}>Tap to open</Text>
-        </TouchableOpacity>
+        <View style={styles.docCard}>
+            <TouchableOpacity onPress={() => handleDownload(item.id, item.name)}>
+                <Text style={styles.docName}>{item.name}</Text>
+                <Text style={styles.docMeta}>Applicant: {item.applicant}</Text>
+                <Text style={styles.docLink}>Tap to open</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.hireButton} onPress={() => handleHire(item)}>
+                <Text style={styles.hireButtonText}>Hire</Text>
+            </TouchableOpacity>
+        </View>
     );
+
 
     return (
         <View style={styles.container}>
@@ -226,4 +311,16 @@ const styles = StyleSheet.create({
         color: '#999',
         marginTop: 30,
     },
+    hireButton: {
+        marginTop: 10,
+        backgroundColor: '#28a745',
+        paddingVertical: 8,
+        borderRadius: 5,
+        alignItems: 'center',
+    },
+    hireButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+
 });

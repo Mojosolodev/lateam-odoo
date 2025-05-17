@@ -35,18 +35,17 @@ const retryLoginAsAdmin = async (database, odooUrl, adminPassword, retries = 5, 
     throw new Error('Admin login failed after retries. Cannot create user.');
 };
 
-
 export default function SignUpScreen({ navigation }) {
+    const [serverAddress, setServerAddress] = useState('');
     const [database, setDatabase] = useState('');
     const [emailOrUsername, setEmailOrUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const odooUrl = 'http://192.168.17.148:8069/';
     const adminPassword = 'openpgpwd'; // This must be in plain text in your odoo.conf
 
     const handleSignUp = async () => {
-        if (!database || !emailOrUsername || !password) {
+        if (!serverAddress || !database || !emailOrUsername || !password) {
             Alert.alert('Missing Fields', 'Please fill in all fields.');
             return;
         }
@@ -57,7 +56,7 @@ export default function SignUpScreen({ navigation }) {
             // Step 1: Duplicate the DB
             console.log('Duplicating DB...');
             const dbRes = await axios.post(
-                `${odooUrl}web/database/duplicate`,
+                `${serverAddress}web/database/duplicate`,
                 qs.stringify({
                     master_pwd: adminPassword,
                     name: 'odoodb',       // Source template
@@ -75,12 +74,11 @@ export default function SignUpScreen({ navigation }) {
             console.log('DB duplicated successfully.');
 
             // Step 2: Retry login until DB is ready
-            const session = await retryLoginAsAdmin(database, odooUrl, adminPassword);
-
+            const session = await retryLoginAsAdmin(database, serverAddress, adminPassword);
 
             // Step 3: Create the user
             console.log('Creating user...');
-            const userRes = await axios.post(`${odooUrl}web/dataset/call_kw/res.users/create`, {
+            const userRes = await axios.post(`${serverAddress}web/dataset/call_kw/res.users/create`, {
                 jsonrpc: "2.0",
                 method: "call",
                 params: {
@@ -116,8 +114,6 @@ export default function SignUpScreen({ navigation }) {
         }
     };
 
-
-
     const handleNavigateToLogin = () => {
         navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     };
@@ -125,6 +121,12 @@ export default function SignUpScreen({ navigation }) {
     return (
         <View style={styles.container}>
             <Image source={require('./images/laTeam noBG.png')} style={styles.logo} />
+            <TextInput
+                style={styles.input}
+                placeholder="Adresse_serveur:http://<IPV4>:8069/"
+                value={serverAddress}
+                onChangeText={setServerAddress}
+            />
             <TextInput
                 style={styles.input}
                 placeholder="Base de données"
