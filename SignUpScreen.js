@@ -3,6 +3,39 @@ import axios from 'axios';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
 import qs from 'qs';
 
+const retryLoginAsAdmin = async (database, odooUrl, adminPassword, retries = 5, delay = 2000) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        console.log(`Admin login attempt ${attempt}/${retries}...`);
+        try {
+            const loginRes = await axios.post(`${odooUrl}web/session/authenticate`, {
+                jsonrpc: "2.0",
+                method: "call",
+                params: {
+                    db: database,
+                    login: "admin",
+                    password: adminPassword
+                },
+                id: new Date().getTime()
+            }, {
+                headers: { "Content-Type": "application/json" }
+            });
+
+            const session = loginRes.data.result;
+            if (session && session.uid) {
+                console.log('Logged in as admin. UID:', session.uid);
+                return session;
+            }
+        } catch (err) {
+            console.warn(`Login attempt ${attempt} failed: ${err.message}`);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    throw new Error('Admin login failed after retries. Cannot create user.');
+};
+
+
 export default function SignUpScreen({ navigation }) {
     const [database, setDatabase] = useState('');
     const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -13,7 +46,6 @@ export default function SignUpScreen({ navigation }) {
     const adminPassword = 'openpgpwd'; // This must be in plain text in your odoo.conf
 
     const handleSignUp = async () => {
-
         if (!database || !emailOrUsername || !password) {
             Alert.alert('Missing Fields', 'Please fill in all fields.');
             return;
@@ -22,19 +54,14 @@ export default function SignUpScreen({ navigation }) {
         setLoading(true);
 
         try {
-            //Create DB
-            console.log('Creating DB...');
+            // Step 1: Duplicate the DB
+            console.log('Duplicating DB...');
             const dbRes = await axios.post(
-                `${odooUrl}web/database/create`,
+                `${odooUrl}web/database/duplicate`,
                 qs.stringify({
-                    master_pwd: 'openpgpwd',
-                    name: database,
-                    login: emailOrUsername,
-                    password: password,
-                    lang: "en_US",
-                    phone: "0000000000",       // Required by Odoo's controller
-                    country_code: "us",        // Required
-                    demo: false                // Optional
+                    master_pwd: adminPassword,
+                    name: 'odoodb',       // Source template
+                    new_name: database    // New DB name
                 }),
                 {
                     headers: { "Content-Type": "application/x-www-form-urlencoded" }
@@ -42,23 +69,54 @@ export default function SignUpScreen({ navigation }) {
             );
 
             if (dbRes.data.error) {
-                console.error('DB creation error:', dbRes.data.error);
                 throw new Error(dbRes.data.error.data.message);
             }
 
-            console.log('DB created successfully.');
+            console.log('DB duplicated successfully.');
 
-            Alert.alert('Success', 'Company Created');
+            // Step 2: Retry login until DB is ready
+            const session = await retryLoginAsAdmin(database, odooUrl, adminPassword);
+
+
+            // Step 3: Create the user
+            console.log('Creating user...');
+            const userRes = await axios.post(`${odooUrl}web/dataset/call_kw/res.users/create`, {
+                jsonrpc: "2.0",
+                method: "call",
+                params: {
+                    model: "res.users",
+                    method: "create",
+                    args: [{
+                        name: emailOrUsername,
+                        login: emailOrUsername,
+                        password: password,
+                        email: emailOrUsername
+                    }],
+                    kwargs: {}
+                },
+                id: new Date().getTime()
+            }, {
+                headers: { "Content-Type": "application/json" },
+                withCredentials: true
+            });
+
+            if (userRes.data.error) {
+                throw new Error(userRes.data.error.data.message);
+            }
+
+            console.log('User created successfully.');
+            Alert.alert('Success', 'Company created and user added!');
             navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
 
         } catch (error) {
             console.error('Signup error:', error.response?.data || error.message);
-            console.error('Raw error:', error.toJSON?.() || error);
             Alert.alert('Signup failed', error.message || 'Check console for more info.');
         } finally {
             setLoading(false);
         }
     };
+
+
 
     const handleNavigateToLogin = () => {
         navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
