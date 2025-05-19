@@ -69,7 +69,7 @@ export default function LoginScreen({ navigation }) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Base de données"
+        placeholder="Company Name"
         value={database}
         onChangeText={setDatabase}
       />

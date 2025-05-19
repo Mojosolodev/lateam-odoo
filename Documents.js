@@ -163,6 +163,7 @@ export default function Documents({ route }) {
         try {
             setLoading(true);
 
+            // Step 1: Login to Odoo
             const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -182,7 +183,7 @@ export default function Documents({ route }) {
             const uid = loginData.result;
             if (!uid) throw new Error("Login failed");
 
-            // Read the attachment to get the res_id (applicant ID)
+            // Step 2: Read the PDF attachment (base64)
             const attachment = await callOdoo({
                 url: odooUrl,
                 db: odooDb,
@@ -191,13 +192,24 @@ export default function Documents({ route }) {
                 model: 'ir.attachment',
                 method: 'read',
                 args: [[item.id]],
-                kwargs: { fields: ['res_id'] },
+                kwargs: { fields: ['res_id', 'datas', 'name'] },
             });
 
             const applicantId = attachment[0].res_id;
-            if (!applicantId) throw new Error("Could not resolve applicant from attachment");
+            const pdfBase64 = attachment[0].datas;
+            if (!applicantId || !pdfBase64) throw new Error("Invalid attachment or applicant ID");
 
-            // Read applicant info
+            // Step 3: Call your Flask backend to extract image from PDF
+            const response = await fetch("http://192.168.17.138:5000/extract-photo", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pdf_base64: pdfBase64 }),
+            });
+
+            const imageResult = await response.json();
+            const imageBase64 = imageResult.image_base64;
+
+            // Step 4: Get applicant data
             const applicant = await callOdoo({
                 url: odooUrl,
                 db: odooDb,
@@ -211,7 +223,18 @@ export default function Documents({ route }) {
 
             const applicantData = applicant[0];
 
-            // Create employee
+            // Step 5: Create employee in Odoo
+            const employeeData = {
+                name: applicantData.partner_name || "Unnamed",
+                work_email: applicantData.email_from || "",
+                job_id: applicantData.job_id ? applicantData.job_id[0] : false,
+                work_phone: applicantData.partner_phone || "",
+            };
+
+            if (imageBase64) {
+                employeeData.image_1920 = imageBase64;
+            }
+
             const newEmployeeId = await callOdoo({
                 url: odooUrl,
                 db: odooDb,
@@ -219,16 +242,10 @@ export default function Documents({ route }) {
                 password: odooPassword,
                 model: 'hr.employee',
                 method: 'create',
-                args: [{
-                    name: applicantData.partner_name || "Unnamed",
-                    work_email: applicantData.email_from || "",
-                    job_id: applicantData.job_id ? applicantData.job_id[0] : false,
-                    work_phone: applicantData.partner_phone || "",
-                }],
+                args: [employeeData],
             });
 
-
-            Alert.alert("Success", `You Hired : ${applicantData.partner_name}`);
+            Alert.alert("Success", `You Hired: ${applicantData.partner_name}`);
         } catch (error) {
             console.error("Hire Error:", error);
             Alert.alert("Error", error.message || "Failed to hire applicant.");
@@ -236,6 +253,7 @@ export default function Documents({ route }) {
             setLoading(false);
         }
     };
+
 
 
     const renderItem = ({ item }) => (

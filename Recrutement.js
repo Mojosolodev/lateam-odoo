@@ -242,6 +242,8 @@ export default function Recrutement({ navigation, route }) {
             <Text style={styles.header}>Job Positions</Text>
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" />
+            ) : jobs.length === 0 ? (
+                <Text style={styles.noJob}>First create a Job Position, then Hire.</Text>
             ) : (
                 <FlatList
                     data={jobs}
@@ -305,6 +307,12 @@ const styles = StyleSheet.create({
     appCountValue: {
         color: 'orange',
         fontWeight: 'bold',
+    },
+    noJob: {
+        textAlign: 'center',
+        fontSize: 16,
+        color: 'orange',
+        marginTop: 30,
     },
 
 });

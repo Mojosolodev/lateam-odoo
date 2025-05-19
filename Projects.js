@@ -230,8 +230,6 @@ export default function Projects({ route, navigation }) {
                                     </TouchableOpacity>
                                 </View>
                             </View>
-
-                            <Text style={styles.id}>ID: {item.id}</Text>
                             <Text style={styles.tasks}>Tasks: {item.task_count ?? 0}</Text>
                             <Text style={styles.completed}>
                                 Completed Tasks: {item.completed_task_count}

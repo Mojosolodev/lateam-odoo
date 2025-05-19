@@ -129,7 +129,7 @@ export default function SignUpScreen({ navigation }) {
             />
             <TextInput
                 style={styles.input}
-                placeholder="Base de données"
+                placeholder="New Company Name"
                 value={database}
                 onChangeText={setDatabase}
             />

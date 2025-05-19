@@ -53,12 +53,12 @@ export default function Jobs({ route }) {
         },
       });
 
-      if (jobResponse.data.result) {
-        setJobPositionCount(jobResponse.data.result);
-      }
-      if (departmentResponse.data.result) {
-        setDepartmentCount(departmentResponse.data.result);
-      }
+      const jobCount = jobResponse.data.result;
+      const departmentCount = departmentResponse.data.result;
+
+      setJobPositionCount(typeof jobCount === 'number' ? jobCount : 0);
+      setDepartmentCount(typeof departmentCount === 'number' ? departmentCount : 0);
+
     } catch (error) {
       console.error('Erreur lors de la récupération des données:', error.response?.data || error.message);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la récupération des données.');
@@ -66,6 +66,7 @@ export default function Jobs({ route }) {
       setLoading(false);
     }
   }
+
   async function fetchEmployeeCounts(departments) {
     try {
       const counts = await Promise.all(
@@ -76,12 +77,13 @@ export default function Jobs({ route }) {
             params: {
               model: 'hr.employee',
               method: 'search_count',
-              args: [[['department_id', '=', dept.id]]], // Count employees in this department
+              args: [[['department_id', '=', dept.id]]],
               kwargs: {},
             },
           });
 
-          return { ...dept, employeeCount: response.data.result || 0 };
+          const count = response.data.result;
+          return { ...dept, employeeCount: typeof count === 'number' ? count : 0 };
         })
       );
 
@@ -90,6 +92,7 @@ export default function Jobs({ route }) {
       console.error("Error fetching employee counts:", error);
     }
   }
+
 
 
   async function fetchDepartments() {
@@ -158,7 +161,9 @@ export default function Jobs({ route }) {
             </View>
           </View>
           <View style={styles.choicesContainer}>
-              <Text style={styles.choiceButtonText}>List of departments</Text>
+            <Text style={styles.choiceButtonText}>
+              {departmentCount === 0 ? 'No department, Create One' : 'List of departments'}
+            </Text>
           </View>
           <FlatList
             data={departments}
@@ -256,12 +261,12 @@ const styles = StyleSheet.create({
   choicesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    top:-10,
+    top: -10,
   },
   choiceButtonText: {
     textAlign: 'center',
     color: "#007bff",
     fontWeight: 'bold',
-    fontSize:18,
+    fontSize: 18,
   },
 });

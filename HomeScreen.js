@@ -49,11 +49,13 @@ function Dashboard({ route }) {
             kwargs: {},
           },
         });
-        if (response.data.result) {
-          setCounts[index](response.data.result);
+        const count = response.data.result;
+        if (typeof count === 'number') {
+          setCounts[index](count);
         } else {
           Alert.alert('Error', `Failed to fetch ${model} count.`);
         }
+
       }));
     } catch (error) {
       console.error('Error fetching counts:', error.response?.data || error.message);
@@ -226,5 +228,5 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
-  
+
 });
