@@ -57,7 +57,7 @@ export default function Recrutement({ navigation, route }) {
                 method: 'search_read',
                 args: [],
                 kwargs: {
-                    fields: ['id', 'name', 'website_published'],
+                    fields: ['id', 'name', 'website_published', 'website_url'],
                 },
             });
 
@@ -73,8 +73,8 @@ export default function Recrutement({ navigation, route }) {
                         args: [[['job_id', '=', job.id]]],
                     });
 
-                    const slug = slugify(job.name);
-                    const link = `${odooUrl}/jobs/detail/${slug}-${job.id}`;
+                    const link = `${odooUrl.replace(/\/$/, '')}/?db=${odooDb}#${job.website_url}`;
+                    console.log('Generated Job Link:', link);
 
                     return {
                         id: job.id.toString(),

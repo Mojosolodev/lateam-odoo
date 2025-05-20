@@ -103,7 +103,7 @@ export default function SignUpScreen({ navigation }) {
             }
 
             console.log('User created successfully.');
-            Alert.alert('Success', 'Company created and user added!');
+            Alert.alert('Success', 'Company created Successfully');
             navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
 
         } catch (error) {

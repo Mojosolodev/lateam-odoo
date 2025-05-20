@@ -63,7 +63,7 @@ export default function AddJob({ route, navigation }) {
   }, []);
 
   async function handleAddJob() {
-    if (!jobName || !jobSummary || !departmentId || !employmentTypeId) {
+    if (!jobName || !departmentId || !employmentTypeId) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
