@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Switch } from 'react-native';
 
 
+
 export default function Recrutement({ navigation, route }) {
     const { odooUrl, odooDb, odooUsername, odooPassword } = route.params;
     const [jobs, setJobs] = useState([]);
@@ -74,7 +75,6 @@ export default function Recrutement({ navigation, route }) {
                     });
 
                     const link = `${odooUrl.replace(/\/$/, '')}/?db=${odooDb}#${job.website_url}`;
-                    console.log('Generated Job Link:', link);
 
                     return {
                         id: job.id.toString(),

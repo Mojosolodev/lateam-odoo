@@ -10,9 +10,9 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-
-  async function authenticate() {
+  async function authenticate(retries = 3, delay = 2000) {
     setLoading(true); // Start loading
+
     const authData = {
       jsonrpc: "2.0",
       method: "call",
@@ -24,32 +24,42 @@ export default function LoginScreen({ navigation }) {
       id: new Date().getTime(),
     };
 
-    try {
-      const response = await axios.post(`${serverAddress}web/session/authenticate`, authData, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (response.data && response.data.result) {
-        Alert.alert('Connected Successfully', 'Welcome or Welcome Back.');
-        navigation.navigate('Home', {
-          odooUrl: serverAddress,
-          odooDb: database,
-          odooUsername: emailOrUsername,
-          odooPassword: password,
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`Login attempt ${attempt}/${retries}`);
+        const response = await axios.post(`${serverAddress}web/session/authenticate`, authData, {
+          headers: { "Content-Type": "application/json" },
         });
-      } else if (response.data?.error?.data?.name === 'odoo.exceptions.AccessDenied') {
-        Alert.alert('Wrong Credentials', 'Access Denied. Please check your username or password.');
-      } else {
-        Alert.alert('Error', 'Wrong Credentials.\nPlease Retry');
-      }
-    } catch (error) {
-      console.error('Error authenticating with Odoo API:', error.response?.data || error.message);
-      Alert.alert('Error', 'Connect to company Failed. Please try again.');
-    } finally {
-      setLoading(false); // Stop loading
-    }
-  }
 
+        if (response.data && response.data.result) {
+          Alert.alert('Connected Successfully', 'Welcome or Welcome Back.');
+          navigation.navigate('Home', {
+            odooUrl: serverAddress,
+            odooDb: database,
+            odooUsername: emailOrUsername,
+            odooPassword: password,
+          });
+          return; // Exit after successful login
+        } else if (response.data?.error?.data?.name === 'odoo.exceptions.AccessDenied') {
+          Alert.alert('Wrong Credentials', 'Access Denied. Please check your username or password.');
+          break;
+        } else {
+          console.warn('Unknown response error:', response.data?.error);
+        }
+      } catch (error) {
+        console.warn(`Attempt ${attempt} failed: ${error.message}`);
+        if (attempt === retries) {
+          Alert.alert('Error', 'Connect to company failed after multiple attempts. Please try again.');
+        }
+      }
+
+      if (attempt < retries) {
+        await new Promise(res => setTimeout(res, delay));
+      }
+    }
+
+    setLoading(false); // Stop loading
+  }
 
   const handleCreateAccount = () => {
     Alert.alert('Redirect', 'Redirecting to create account screen...');
@@ -88,7 +98,7 @@ export default function LoginScreen({ navigation }) {
       />
       <TouchableOpacity
         style={[styles.button, loading && { opacity: 0.7 }]}
-        onPress={authenticate}
+        onPress={() => authenticate()}
         disabled={loading}
       >
         {loading ? (
@@ -101,7 +111,6 @@ export default function LoginScreen({ navigation }) {
       <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
         <Text style={styles.createAccountText}>Don't have a company? Create Company</Text>
       </TouchableOpacity>
-
     </View>
   );
 }
@@ -115,8 +124,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   logo: {
-    width: 500, // Adjust the width as needed
-    height: 174, // Adjust the height as needed
+    width: 500,
+    height: 174,
+    marginBottom: 20,
   },
   input: {
     width: '100%',
