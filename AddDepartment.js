@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +11,7 @@ export default function AddDepartment({ route }) {
   const [parentDepartment, setParentDepartment] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false); // loading state
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -55,6 +56,9 @@ export default function AddDepartment({ route }) {
       Alert.alert('Erreur', 'Veuillez entrer le nom du département.');
       return;
     }
+
+    setLoading(true); // Start loading
+
     try {
       const response = await axios.post(`${odooUrl}web/dataset/call_kw`, {
         jsonrpc: '2.0',
@@ -66,6 +70,7 @@ export default function AddDepartment({ route }) {
           kwargs: {},
         },
       });
+
       if (response.data.result) {
         Alert.alert('Succès', 'Département ajouté avec succès.');
         navigation.goBack();
@@ -75,13 +80,20 @@ export default function AddDepartment({ route }) {
     } catch (error) {
       console.error('Erreur lors de l’ajout du département:', error);
       Alert.alert('Erreur', 'Une erreur est survenue.');
+    } finally {
+      setLoading(false); // Stop loading
     }
   }
 
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Add New Department</Text>
-      <TextInput style={styles.input} placeholder="Department Name" value={departmentName} onChangeText={setDepartmentName} />
+      <TextInput
+        style={styles.input}
+        placeholder="Department Name"
+        value={departmentName}
+        onChangeText={setDepartmentName}
+      />
       <Text style={styles.label}>Manager:</Text>
       <Picker selectedValue={manager} onValueChange={setManager} style={styles.picker}>
         <Picker.Item label="Select Manager" value={null} />
@@ -96,8 +108,16 @@ export default function AddDepartment({ route }) {
           <Picker.Item key={dept.id} label={dept.name} value={dept.id} />
         ))}
       </Picker>
-      <TouchableOpacity style={styles.button} onPress={createDepartment}>
-        <Text style={styles.buttonText}>Create Department</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={createDepartment}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>Create Department</Text>
+        )}
       </TouchableOpacity>
     </View>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
@@ -16,6 +16,7 @@ export default function AddJob({ route, navigation }) {
   const [departments, setDepartments] = useState([]);
   const [employmentTypeId, setEmploymentTypeId] = useState(null);
   const [employmentTypes, setEmploymentTypes] = useState([]);
+  const [loading, setLoading] = useState(false); // New loading state
 
   useEffect(() => {
     async function fetchDepartments() {
@@ -68,6 +69,8 @@ export default function AddJob({ route, navigation }) {
       return;
     }
 
+    setLoading(true); // Start loading
+
     try {
       const authResponse = await client.post(`${odooUrl}web/session/authenticate`, {
         jsonrpc: '2.0',
@@ -104,6 +107,8 @@ export default function AddJob({ route, navigation }) {
     } catch (error) {
       console.error('Erreur lors de l’ajout du poste:', error.response?.data || error.message);
       Alert.alert('Erreur', 'Une erreur est survenue.');
+    } finally {
+      setLoading(false); // Stop loading
     }
   }
 
@@ -133,8 +138,16 @@ export default function AddJob({ route, navigation }) {
         multiline
         numberOfLines={4}
       />
-      <TouchableOpacity style={styles.button} onPress={handleAddJob}>
-        <Text style={styles.buttonText}>Create Job</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={handleAddJob}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>Create Job</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
