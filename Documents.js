@@ -200,7 +200,7 @@ export default function Documents({ route }) {
             if (!applicantId || !pdfBase64) throw new Error("Invalid attachment or applicant ID");
 
             // Step 3: Call your Flask backend to extract image from PDF
-            const response = await fetch("https://lateam-odoo.onrender.com", {
+            const response = await fetch("https://lateam-odoo.onrender.com/extract-photo", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pdf_base64: pdfBase64 }),
