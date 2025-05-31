@@ -1,4 +1,3 @@
-// Documents.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, Linking, TouchableOpacity } from 'react-native';
 import * as FileSystem from 'expo-file-system';
@@ -47,9 +46,6 @@ export default function Documents({ route }) {
                 kwargs: { fields: ['id'] },
             });
 
-
-
-
             const applicantIds = applicants.map((a) => a.id);
             if (applicantIds.length === 0) {
                 setDocuments([]);
@@ -57,7 +53,7 @@ export default function Documents({ route }) {
                 return;
             }
 
-            // Step 3: Get related attachments (only safe fields)
+            // Step 3: Get attachments + phone numbers
             const docs = await callOdoo({
                 url: odooUrl,
                 db: odooDb,
@@ -70,18 +66,47 @@ export default function Documents({ route }) {
                     ['res_id', 'in', applicantIds]
                 ]],
                 kwargs: {
-                    fields: ['id', 'name', 'res_name'],  // safe, readable fields
+                    fields: ['id', 'name', 'res_name', 'res_id'],
                 },
             });
 
-            const docList = docs.map((doc) => ({
-                id: doc.id, // important!
-                name: doc.name,
-                applicant: doc.res_name || 'Unknown',
+            const fullDocs = await Promise.all(docs.map(async (doc) => {
+                let phone = '';
+                let email = '';
+                let applicantName = doc.res_name || 'Unknown';
+
+                try {
+                    const applicantResult = await callOdoo({
+                        url: odooUrl,
+                        db: odooDb,
+                        uid,
+                        password: odooPassword,
+                        model: 'hr.applicant',
+                        method: 'read',
+                        args: [[doc.res_id]],
+                        kwargs: { fields: ['partner_phone', 'email_from', 'partner_name'] },
+                    });
+
+                    const applicant = applicantResult[0];
+                    phone = applicant?.partner_phone || '';
+                    email = applicant?.email_from || '';
+                    applicantName = applicant?.partner_name || applicantName;
+
+                } catch (e) {
+                    console.warn("Error fetching applicant info for doc", doc.id, e);
+                }
+
+                return {
+                    id: doc.id,
+                    name: doc.name,
+                    applicant: applicantName,
+                    phone,
+                    email,
+                };
             }));
 
 
-            setDocuments(docList);
+            setDocuments(fullDocs);
         } catch (error) {
             console.error('Odoo Error:', error);
             Alert.alert("Odoo Server Error", error.message || "Failed to fetch documents.");
@@ -89,9 +114,6 @@ export default function Documents({ route }) {
             setLoading(false);
         }
     };
-
-
-
 
     const callOdoo = async ({ url, db, uid, password, model, method, args, kwargs = {} }) => {
         const res = await fetch(`${url}/jsonrpc`, {
@@ -112,6 +134,7 @@ export default function Documents({ route }) {
         if (data.error) throw new Error(data.error.message);
         return data.result;
     };
+
     const handleDownload = async (attachmentId, fileName) => {
         try {
             const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
@@ -163,7 +186,6 @@ export default function Documents({ route }) {
         try {
             setLoading(true);
 
-            // Step 1: Login to Odoo
             const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -183,7 +205,6 @@ export default function Documents({ route }) {
             const uid = loginData.result;
             if (!uid) throw new Error("Login failed");
 
-            // Step 2: Read the PDF attachment (base64)
             const attachment = await callOdoo({
                 url: odooUrl,
                 db: odooDb,
@@ -199,7 +220,6 @@ export default function Documents({ route }) {
             const pdfBase64 = attachment[0].datas;
             if (!applicantId || !pdfBase64) throw new Error("Invalid attachment or applicant ID");
 
-            // Step 3: Call your Flask backend to extract image from PDF
             const response = await fetch("https://lateam-odoo.onrender.com/extract-photo", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -209,7 +229,6 @@ export default function Documents({ route }) {
             const imageResult = await response.json();
             const imageBase64 = imageResult.image_base64;
 
-            // Step 4: Get applicant data
             const applicant = await callOdoo({
                 url: odooUrl,
                 db: odooDb,
@@ -223,7 +242,6 @@ export default function Documents({ route }) {
 
             const applicantData = applicant[0];
 
-            // Step 5: Create employee in Odoo
             const employeeData = {
                 name: applicantData.partner_name || "Unnamed",
                 work_email: applicantData.email_from || "",
@@ -254,8 +272,6 @@ export default function Documents({ route }) {
         }
     };
 
-
-
     const renderItem = ({ item }) => (
         <View style={styles.docCard}>
             <TouchableOpacity onPress={() => handleDownload(item.id, item.name)}>
@@ -263,6 +279,30 @@ export default function Documents({ route }) {
                 <Text style={styles.docMeta}>Applicant: {item.applicant}</Text>
                 <Text style={styles.docLink}>Tap to open</Text>
             </TouchableOpacity>
+
+            {item.phone ? (
+                <View style={styles.row}>
+                    <Text style={styles.rowText}>📞 {item.phone}</Text>
+                    <TouchableOpacity
+                        style={styles.rowButton}
+                        onPress={() => Linking.openURL(`tel:${item.phone}`)}
+                    >
+                        <Text style={styles.rowButtonText}>Call</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : <Text style={styles.noPhone}>No phone number</Text>}
+
+            {item.email ? (
+                <View style={styles.row}>
+                    <Text style={styles.rowText}>📧 {item.email}</Text>
+                    <TouchableOpacity
+                        style={[styles.rowButton, { backgroundColor: '#6f42c1' }]}
+                        onPress={() => Linking.openURL(`mailto:${item.email}`)}
+                    >
+                        <Text style={styles.rowButtonText}>Email</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : <Text style={styles.noPhone}>No email address</Text>}
 
             <TouchableOpacity style={styles.hireButton} onPress={() => handleHire(item)}>
                 <Text style={styles.hireButtonText}>Hire</Text>
@@ -273,7 +313,7 @@ export default function Documents({ route }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Attachements : {jobTitle}</Text>
+            <Text style={styles.header}>Attachments : {jobTitle}</Text>
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" />
             ) : documents.length === 0 ? (
@@ -293,7 +333,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#ffebe6',
     },
     header: {
         fontSize: 20,
@@ -323,11 +363,30 @@ const styles = StyleSheet.create({
         color: '#007bff',
         textDecorationLine: 'underline',
     },
-    noDocs: {
-        textAlign: 'center',
-        fontSize: 16,
+    phoneRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    phoneText: {
+        fontSize: 14,
+        color: '#222',
+    },
+    noPhone: {
+        fontSize: 13,
         color: '#999',
-        marginTop: 30,
+        marginTop: 6,
+    },
+    callButton: {
+        backgroundColor: '#007bff',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 5,
+    },
+    callButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
     },
     hireButton: {
         marginTop: 10,
@@ -337,6 +396,34 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     hireButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    noDocs: {
+        textAlign: 'center',
+        fontSize: 16,
+        color: '#999',
+        marginTop: 30,
+    },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    rowText: {
+        fontSize: 14,
+        color: '#222',
+        flex: 1,
+        marginRight: 10,
+    },
+    rowButton: {
+        backgroundColor: '#007bff',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 5,
+    },
+    rowButtonText: {
         color: '#fff',
         fontWeight: 'bold',
     },
