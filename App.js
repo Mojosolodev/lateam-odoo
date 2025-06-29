@@ -18,6 +18,8 @@ import Recrutement from './Recrutement';
 import Documents from './Documents';
 import AddTask from './AddTask';
 import SignUpScreen from './SignUpScreen';
+import Payment from './Payment';
+import Transfer from './Transfer';
 
 const Stack = createNativeStackNavigator();
 
@@ -53,6 +55,8 @@ export default function App() {
         <Stack.Screen name="Recrutement" component={Recrutement} />
         <Stack.Screen name="Documents" component={Documents} />
         <Stack.Screen name="AddTask" component={AddTask} />
+        <Stack.Screen name="Payment" component={Payment} />
+        <Stack.Screen name="Transfer" component={Transfer} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -55,6 +55,14 @@ export default function More({ navigation, route }) {
           odooPassword,
         });
       }
+      else if (item.title === 'Payment') {
+        navigation.navigate('Payment', {
+          odooUrl,
+          odooDb,
+          odooUsername,
+          odooPassword,
+        });
+      }
       else {
         alert(`Navigating to ${item.title}`);
       }

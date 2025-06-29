@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOp
 import axios from 'axios';
 import { CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
-import { MaterialIcons,FontAwesome } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 
 // Wrap Axios with cookie jar support
 const jar = new CookieJar();
@@ -40,7 +40,7 @@ export default function Employees({ route, navigation }) {
         params: {
           model: 'hr.employee',
           method: 'search_read',
-          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone', 'image_1920','work_email','department_id','job_id','parent_id','coach_id','active']], // Include active
+          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone', 'image_1920', 'work_email', 'department_id', 'job_id', 'parent_id', 'coach_id', 'active',]], // Include active
           kwargs: {},
         },
       });
@@ -133,7 +133,13 @@ export default function Employees({ route, navigation }) {
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.employeeCard}
               onPress={() =>
-                navigation.navigate('EmployeeDetail', { employee: item })
+                navigation.navigate('EmployeeDetail', {
+                  employee: item,
+                  odooUrl,
+                  odooDb,
+                  odooUsername,
+                  odooPassword,
+                })
               }
             >
               <View style={styles.employeeInfo}>
@@ -159,20 +165,20 @@ export default function Employees({ route, navigation }) {
                 </View>
               </View>
               <View style={styles.employeeActions}>
-              <TouchableOpacity
-  onPress={() =>
-    navigation.navigate('UpdateEmployee', {
-      employee: item, // Pass full employee object
-      odooUrl,
-      odooDb,
-      odooUsername,
-      odooPassword,
-      onEmployeeUpdated: fetchEmployees,
-    })
-  }
->
-  <FontAwesome name="edit" size={24} color="#007bff" style={styles.icon} />
-</TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('UpdateEmployee', {
+                      employee: item, // Pass full employee object
+                      odooUrl,
+                      odooDb,
+                      odooUsername,
+                      odooPassword,
+                      onEmployeeUpdated: fetchEmployees,
+                    })
+                  }
+                >
+                  <FontAwesome name="edit" size={24} color="#007bff" style={styles.icon} />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDelete(item)}>
                   <MaterialIcons name="delete" size={24} color="#ff3d00" style={styles.icon} />
                 </TouchableOpacity>
