@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import mtnLogo from './assets/mtn.png';       // path to MTN logo
 import orangeLogo from './assets/orange.png'; // path to Orange logo
@@ -12,6 +12,8 @@ export default function Transfer({ route }) {
     const [selectedNumber, setSelectedNumber] = useState('');
     const [senderNumber, setSenderNumber] = useState('');
     const [fees, setFees] = useState('');
+    const [loading, setLoading] = useState(false);
+
 
     function getOperatorLogo(number) {
         if (!number) return null;
@@ -82,13 +84,8 @@ export default function Transfer({ route }) {
             Alert.alert('Error', 'Please select a receiver\'s number.');
             return;
         }
-        console.log("Sending payment request:", {
-            senderNumber,
-            amount: totalAmount,
-            receiverName: employee.name || "Receiver",
-            receiverEmail: employee.work_email || "josiasmoffo@gmail.com",
-            network: getOperator(selectedNumber)
-        });
+
+        setLoading(true); // Show spinner
 
         try {
             const response = await fetch('http://192.168.102.146:5000/api/payment', {
@@ -98,12 +95,14 @@ export default function Transfer({ route }) {
                     senderNumber,
                     amount: totalAmount,
                     receiverName: employee.name || "Receiver",
-                    receiverEmail: employee.work_email || "josiasmoffo@gmail.com",
-                    network: getOperator(selectedNumber) // returns "MTN" or "ORANGE"
+                    receiverEmail: employee.work_email || "example@gmail.com",
+                    network: getOperator(selectedNumber)
                 })
             });
 
             const result = await response.json();
+            setLoading(false); // Hide spinner
+
             if (result.success) {
                 const paymentLink = result.data?.data?.link;
 
@@ -121,15 +120,17 @@ export default function Transfer({ route }) {
                 } else {
                     Alert.alert('Payment Initiated', 'Payment was created, but no link was returned.');
                 }
-            }
-            else {
+            } else {
                 Alert.alert('Error', result.message || 'Failed to initiate payment.');
             }
+
         } catch (error) {
+            setLoading(false); // Hide spinner
             console.error('Payment error:', error);
-            Alert.alert('Error', 'An unexpected error occurred.');
+            Alert.alert('Error', 'Check your Internet Access.');
         }
     }
+
 
 
     return (
@@ -212,9 +213,13 @@ export default function Transfer({ route }) {
                 <Text style={styles.wage}>Salary: {employee.wage !== 'N/A' ? `${employee.wage} FCFA` : 'N/A'}</Text>
                 <Text style={styles.total}>Total: {totalAmount} FCFA</Text>
 
-                <TouchableOpacity style={styles.transferButton} onPress={handleTransfer}>
-                    <Text style={styles.transferButtonText}>Transfer Money</Text>
-                </TouchableOpacity>
+                {loading ? (
+                    <ActivityIndicator size="large" color="#007bff" />
+                ) : (
+                    <TouchableOpacity style={styles.transferButton} onPress={handleTransfer}>
+                        <Text style={styles.transferButtonText}>Transfer Money</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </KeyboardAvoidingView>
 
