@@ -14,6 +14,7 @@ export default function Enregistrement({ route, navigation }) {
   const [jobs, setJobs] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [wage, setWage] = useState('');
 
   useEffect(() => {
     fetchDepartments();
@@ -24,9 +25,7 @@ export default function Enregistrement({ route, navigation }) {
     try {
       const response = await fetch(`${odooUrl}web/dataset/call_kw`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jsonrpc: '2.0',
           method: 'call',
@@ -49,9 +48,7 @@ export default function Enregistrement({ route, navigation }) {
     try {
       const response = await fetch(`${odooUrl}web/dataset/call_kw`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jsonrpc: '2.0',
           method: 'call',
@@ -71,17 +68,16 @@ export default function Enregistrement({ route, navigation }) {
   };
 
   const handleSave = async () => {
-    if (!name || !workEmail || !workPhone || !workMobile || !jobTitle || !selectedDepartment || !selectedJob) {
-      Alert.alert('Validation Error', 'All fields are required.');
+    if (!name || !workEmail || !workPhone || !workMobile || !jobTitle || !selectedDepartment || !selectedJob || !wage) {
+      Alert.alert('Validation Error', 'All fields are required, including Wage.');
       return;
     }
 
     try {
-      const response = await fetch(`${odooUrl}web/dataset/call_kw`, {
+      // Create employee
+      const employeeResponse = await fetch(`${odooUrl}web/dataset/call_kw`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jsonrpc: '2.0',
           method: 'call',
@@ -102,20 +98,47 @@ export default function Enregistrement({ route, navigation }) {
         }),
       });
 
-      const result = await response.json();
+      const employeeResult = await employeeResponse.json();
 
-      if (result.result) {
-        Alert.alert('Success', 'Employee added successfully!');
-        if (onEmployeeAdded) {
-          onEmployeeAdded(); // Trigger the callback only after successfully adding the employee
+      if (employeeResult.result) {
+        const employeeId = employeeResult.result;
+
+        // Create contract for the employee with the entered wage
+        const contractResponse = await fetch(`${odooUrl}web/dataset/call_kw`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+              model: 'hr.contract',
+              method: 'create',
+              args: [{
+                name: `Contract for ${name}`,
+                employee_id: employeeId,
+                wage: parseFloat(wage),
+                struct_id: 1, // assuming default salary structure id
+              }],
+              kwargs: {},
+            },
+          }),
+        });
+
+        const contractResult = await contractResponse.json();
+
+        if (contractResult.result) {
+          Alert.alert('Success', 'Employee and contract added successfully!');
+          if (onEmployeeAdded) onEmployeeAdded();
+          navigation.goBack();
+        } else {
+          Alert.alert('Partial Success', 'Employee added, but failed to create contract.');
         }
-        navigation.goBack(); // Navigate back to Employees.js
       } else {
-        Alert.alert('Error', 'Failed to save employee. Please check your server configuration or inputs.');
+        Alert.alert('Error', 'Failed to save employee. Please check your server or inputs.');
       }
     } catch (error) {
-      console.error('Error saving employee:', error);
-      Alert.alert('Error', 'An unexpected error occurred while saving the employee.');
+      console.error('Error saving employee or contract:', error);
+      Alert.alert('Error', 'An unexpected error occurred while saving.');
     }
   };
 
@@ -161,19 +184,22 @@ export default function Enregistrement({ route, navigation }) {
         <Picker.Item label="Select Job Position" value={null} />
         {jobs.map(job => <Picker.Item key={job.id} label={job.name} value={job.id} />)}
       </Picker>
+      <TextInput
+        style={styles.input}
+        placeholder="Wage (FCFA)"
+        value={wage}
+        onChangeText={setWage}
+        keyboardType='numeric'
+      />
       <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Save</Text>
+        <Text style={styles.buttonText}>Add Employee</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
   input: {
     width: '100%',
     height: 50,
@@ -192,8 +218,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 5,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
+  buttonText: { color: '#fff', fontSize: 16 },
 });
