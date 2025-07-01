@@ -80,7 +80,7 @@ export default function Payment({ route, navigation }) {
                 params: {
                     model: 'hr.employee',
                     method: 'search_read',
-                    args: [[], ['id', 'name', 'mobile_phone', 'work_phone', 'image_1920']],
+                    args: [[], ['id', 'name', 'mobile_phone', 'work_phone', 'image_1920', 'work_email']],
                     kwargs: {},
                 },
             });
