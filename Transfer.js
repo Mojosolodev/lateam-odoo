@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Alert } fro
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import mtnLogo from './assets/mtn.png';       // path to MTN logo
 import orangeLogo from './assets/orange.png'; // path to Orange logo
+import { Linking } from 'react-native';
 
 
 export default function Transfer({ route }) {
@@ -19,19 +20,34 @@ export default function Transfer({ route }) {
         const cleanNumber = number.replace(/\D/g, ''); // keep digits only
 
         // Check MTN prefixes
-        const mtnPrefixes = ['67', '650', '651', '652', '653', '654','680'];
+        const mtnPrefixes = ['67', '650', '651', '652', '653', '654', '680'];
         for (const prefix of mtnPrefixes) {
             if (cleanNumber.startsWith(prefix)) return mtnLogo;
         }
 
         // Check Orange prefixes
-        const orangePrefixes = ['69', '655', '656', '657', '658', '659','640','686','687','688','689'];
+        const orangePrefixes = ['69', '655', '656', '657', '658', '659', '640', '686', '687', '688', '689'];
         for (const prefix of orangePrefixes) {
             if (cleanNumber.startsWith(prefix)) return orangeLogo;
         }
 
         return null;
     }
+    function getOperator(number) {
+        if (!number) return "";
+        const cleanNumber = number.replace(/\D/g, '');
+        const mtnPrefixes = ['67', '650', '651', '652', '653', '654', '680'];
+        const orangePrefixes = ['69', '655', '656', '657', '658', '659', '640', '686', '687', '688', '689'];
+
+        for (const prefix of mtnPrefixes) {
+            if (cleanNumber.startsWith(prefix)) return "MTN";
+        }
+        for (const prefix of orangePrefixes) {
+            if (cleanNumber.startsWith(prefix)) return "ORANGE";
+        }
+        return "";
+    }
+
 
 
 
@@ -57,7 +73,7 @@ export default function Transfer({ route }) {
     const feeAmount = parseNumber(fees);
     const totalAmount = wageAmount + feeAmount;
 
-    function handleTransfer() {
+    async function handleTransfer() {
         if (!senderNumber) {
             Alert.alert('Error', 'Please enter the sender\'s number.');
             return;
@@ -66,11 +82,55 @@ export default function Transfer({ route }) {
             Alert.alert('Error', 'Please select a receiver\'s number.');
             return;
         }
-        Alert.alert(
-            'Transfer',
-            `Transferring ${totalAmount} FCFA to ${selectedNumber} from ${senderNumber}.`
-        );
+        console.log("Sending payment request:", {
+            senderNumber,
+            amount: totalAmount,
+            receiverName: employee.name || "Receiver",
+            receiverEmail: employee.work_email || "josiasmoffo@gmail.com",
+            network: getOperator(selectedNumber)
+        });
+
+        try {
+            const response = await fetch('http://192.168.102.146:5000/api/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    senderNumber,
+                    amount: totalAmount,
+                    receiverName: employee.name || "Receiver",
+                    receiverEmail: employee.work_email || "josiasmoffo@gmail.com",
+                    network: getOperator(selectedNumber) // returns "MTN" or "ORANGE"
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                const paymentLink = result.data?.data?.link;
+
+                if (paymentLink) {
+                    Alert.alert(
+                        'Payment Initiated',
+                        'You’ll be redirected to confirm the payment.',
+                        [
+                            {
+                                text: 'Proceed',
+                                onPress: () => Linking.openURL(paymentLink)
+                            }
+                        ]
+                    );
+                } else {
+                    Alert.alert('Payment Initiated', 'Payment was created, but no link was returned.');
+                }
+            }
+            else {
+                Alert.alert('Error', result.message || 'Failed to initiate payment.');
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            Alert.alert('Error', 'An unexpected error occurred.');
+        }
     }
+
 
     return (
         <KeyboardAvoidingView
