@@ -6,7 +6,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Your Flutterwave secret key
-const FLW_SECRET_KEY = 'FLWSECK_TEST-62f1e106b31657c3123ccd3b35cae34d-X';
+const FLW_SECRET_KEY = process.env.FLW_SECRET_KEY;
 
 app.post('/api/payment', async (req, res) => {
     const { senderNumber, amount, receiverName, receiverEmail } = req.body;

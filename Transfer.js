@@ -88,7 +88,7 @@ export default function Transfer({ route }) {
         setLoading(true); // Show spinner
 
         try {
-            const response = await fetch('http://192.168.102.146:5000/api/payment', {
+            const response = await fetch('https://payment-api-0dyt.onrender.com/api/payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
