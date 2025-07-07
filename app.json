@@ -25,7 +25,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.mojojojodev.snackc5e69970338f47cbb137bac0786def6d"
+      "package": "com.mojojojodev.snackc5e69970338f47cbb137bac0786def6d",
+      "networkSecurityConfig": "./assets/xml/network_security_config.xml"
     },
     "web": {
       "favicon": "./assets/favicon.png"

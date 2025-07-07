@@ -59,7 +59,7 @@ export default function SignUpScreen({ navigation }) {
                 `${serverAddress}web/database/duplicate`,
                 qs.stringify({
                     master_pwd: adminPassword,
-                    name: 'bitnami_odoo',       // Source template
+                    name: 'odoodb',       // Source template
                     new_name: database    // New DB name
                 }),
                 {
