@@ -4,7 +4,7 @@ import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Image, Acti
 
 export default function LoginScreen({ navigation }) {
 
-  const [serverAddress, setServerAddress] = useState('');
+  const [serverAddress, setServerAddress] = useState('https://lateamodoo.duckdns.org/');
   const [database, setDatabase] = useState('');
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -71,12 +71,7 @@ export default function LoginScreen({ navigation }) {
         source={require('./images/laTeam noBG.png')} // Adjust the path if necessary
         style={styles.logo}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Adresse_serveur:http://<IPV4>:8069/"
-        value={serverAddress}
-        onChangeText={setServerAddress}
-      />
+      <Text style={styles.headerTitle}>Manage your Company with Ease</Text>
       <TextInput
         style={styles.input}
         placeholder="Company Name"
@@ -126,7 +121,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 500,
     height: 174,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   input: {
     width: '100%',
@@ -134,7 +129,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 15,
+    marginBottom: 20,
     paddingLeft: 10,
     backgroundColor: '#fff',
   },
@@ -152,8 +147,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   createAccountText: {
-    color: '#007bff',
+    color: '#31ae21',
     fontSize: 16,
     textDecorationLine: 'underline',
+    marginTop:10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3393ff',
+    textAlign: 'center',
+    marginBottom: 20,
   },
 });

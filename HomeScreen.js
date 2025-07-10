@@ -82,6 +82,8 @@ function Dashboard({ route }) {
       ) : (
         <>
           <View style={styles.header}>
+            <Text>Welcome Back to </Text>
+            <Text style={styles.companyName}>{odooDb}</Text>
             <Text style={styles.headerTitle}>Manage your Company with Ease</Text>
             <Text style={styles.headerSubtitle}>Real-time insights. Smarter decisions.</Text>
           </View>
@@ -228,5 +230,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
+  companyName:{
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ff8080',
+    textAlign: 'center',
+  }
 
 });

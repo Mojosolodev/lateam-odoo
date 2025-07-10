@@ -36,7 +36,7 @@ const retryLoginAsAdmin = async (database, odooUrl, adminPassword, retries = 5, 
 };
 
 export default function SignUpScreen({ navigation }) {
-    const [serverAddress, setServerAddress] = useState('');
+    const [serverAddress, setServerAddress] = useState('https://lateamodoo.duckdns.org/');
     const [database, setDatabase] = useState('');
     const [emailOrUsername, setEmailOrUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -121,12 +121,7 @@ export default function SignUpScreen({ navigation }) {
     return (
         <View style={styles.container}>
             <Image source={require('./images/laTeam noBG.png')} style={styles.logo} />
-            <TextInput
-                style={styles.input}
-                placeholder="Adresse_serveur:http://<IPV4>:8069/"
-                value={serverAddress}
-                onChangeText={setServerAddress}
-            />
+            <Text style={styles.headerTitle}>Manage your Company with Ease</Text>
             <TextInput
                 style={styles.input}
                 placeholder="New Company Name"
@@ -166,11 +161,20 @@ export default function SignUpScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#f5f5f5' },
-    logo: { width: 500, height: 174, marginBottom: 20 },
+    logo: {
+        width: 500,
+        height: 174,
+        marginBottom: 10,
+    },
     input: {
-        width: '100%', height: 50, borderColor: '#ccc',
-        borderWidth: 1, borderRadius: 5, marginBottom: 15,
-        paddingLeft: 10, backgroundColor: '#fff'
+        width: '100%',
+        height: 50,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 5,
+        marginBottom: 20,
+        paddingLeft: 10,
+        backgroundColor: '#fff',
     },
     button: {
         width: '100%', height: 50, backgroundColor: '#28a745',
@@ -178,5 +182,12 @@ const styles = StyleSheet.create({
         borderRadius: 5, marginTop: 10, marginBottom: 15
     },
     buttonText: { color: '#fff', fontSize: 16 },
-    loginLink: { color: '#007bff', fontSize: 16, textDecorationLine: 'underline' }
+    loginLink: { color: '#007bff', fontSize: 16, textDecorationLine: 'underline',marginTop:10 },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#60d152',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
 });

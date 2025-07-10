@@ -74,7 +74,8 @@ export default function Recrutement({ navigation, route }) {
                         args: [[['job_id', '=', job.id]]],
                     });
 
-                    const link = `${odooUrl.replace(/\/$/, '')}/?db=${odooDb}#${job.website_url}`;
+                    //const link = `${odooUrl.replace(/\/$/, '')}/?db=${odooDb}#${job.website_url}`;
+                    const link = `${odooUrl.replace(/\/$/, '')}${job.website_url}`;
 
                     return {
                         id: job.id.toString(),
