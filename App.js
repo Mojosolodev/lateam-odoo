@@ -20,6 +20,7 @@ import AddTask from './AddTask';
 import SignUpScreen from './SignUpScreen';
 import Payment from './Payment';
 import Transfer from './Transfer';
+import UpdateJob from './UpdateJob';
 
 const Stack = createNativeStackNavigator();
 
@@ -57,6 +58,7 @@ export default function App() {
         <Stack.Screen name="AddTask" component={AddTask} />
         <Stack.Screen name="Payment" component={Payment} />
         <Stack.Screen name="Transfer" component={Transfer} />
+        <Stack.Screen name="UpdateJob" component={UpdateJob} />
       </Stack.Navigator>
     </NavigationContainer>
   );
