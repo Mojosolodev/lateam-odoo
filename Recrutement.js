@@ -14,14 +14,11 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { Switch } from 'react-native';
 
-
-
 export default function Recrutement({ navigation, route }) {
     const { odooUrl, odooDb, odooUsername, odooPassword } = route.params;
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updatingJobId, setUpdatingJobId] = useState(null);
-
 
     useEffect(() => {
         authenticateAndFetchJobs();
@@ -58,7 +55,7 @@ export default function Recrutement({ navigation, route }) {
                 method: 'search_read',
                 args: [],
                 kwargs: {
-                    fields: ['id', 'name', 'website_published', 'website_url'],
+                    fields: ['id', 'name', 'website_published', 'website_url', 'skill_ids'],
                 },
             });
 
@@ -74,7 +71,22 @@ export default function Recrutement({ navigation, route }) {
                         args: [[['job_id', '=', job.id]]],
                     });
 
-                    //const link = `${odooUrl.replace(/\/$/, '')}/?db=${odooDb}#${job.website_url}`;
+                    // Fetch skill names
+                    let skills = [];
+                    if (job.skill_ids && job.skill_ids.length > 0) {
+                        const skillData = await callOdoo({
+                            url: odooUrl,
+                            db: odooDb,
+                            uid,
+                            password: odooPassword,
+                            model: 'hr.skill',
+                            method: 'read',
+                            args: [job.skill_ids],
+                            kwargs: { fields: ['name'] },
+                        });
+                        skills = skillData.map(skill => skill.name);
+                    }
+
                     const link = `${odooUrl.replace(/\/$/, '')}${job.website_url}`;
 
                     return {
@@ -83,8 +95,8 @@ export default function Recrutement({ navigation, route }) {
                         applications: count,
                         link,
                         published: job.website_published,
+                        skills,
                     };
-
                 })
             );
 
@@ -141,6 +153,7 @@ export default function Recrutement({ navigation, route }) {
             Alert.alert("Error", "Could not share the link.");
         }
     };
+
     const togglePublished = async (jobId, newStatus) => {
         setUpdatingJobId(jobId); // start spinner
 
@@ -186,8 +199,6 @@ export default function Recrutement({ navigation, route }) {
         }
     };
 
-
-
     const renderItem = ({ item }) => (
         <TouchableOpacity
             style={styles.jobCard}
@@ -199,6 +210,7 @@ export default function Recrutement({ navigation, route }) {
                     odooDb,
                     odooUsername,
                     odooPassword,
+                    skills: item.skills,
                 })
             }
         >
@@ -226,17 +238,13 @@ export default function Recrutement({ navigation, route }) {
                     <Switch
                         value={item.published}
                         onValueChange={(newValue) => togglePublished(item.id, newValue)}
-                        trackColor={{ false: '#ccc', true: 'lightgreen' }} // background color of the track
-                        thumbColor={item.published ? 'green' : '#f4f3f4'}   // circle color
+                        trackColor={{ false: '#ccc', true: 'lightgreen' }}
+                        thumbColor={item.published ? 'green' : '#f4f3f4'}
                     />
-
                 )}
             </View>
-
-
         </TouchableOpacity>
     );
-
 
     return (
         <View style={styles.container}>
@@ -315,5 +323,4 @@ const styles = StyleSheet.create({
         color: 'orange',
         marginTop: 30,
     },
-
 });

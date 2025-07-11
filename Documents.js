@@ -4,7 +4,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 export default function Documents({ route }) {
-    const { jobId, jobTitle, odooUrl, odooDb, odooUsername, odooPassword } = route.params;
+    const { jobId, jobTitle, odooUrl, odooDb, odooUsername, odooPassword, skills } = route.params;
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -104,7 +104,6 @@ export default function Documents({ route }) {
                     email,
                 };
             }));
-
 
             setDocuments(fullDocs);
         } catch (error) {
@@ -310,10 +309,21 @@ export default function Documents({ route }) {
         </View>
     );
 
-
     return (
         <View style={styles.container}>
             <Text style={styles.header}>Attachments : {jobTitle}</Text>
+            <View style={styles.skillsCard}>
+                <Text style={styles.skillsTitle}>Expected Skills</Text>
+                {skills && skills.length > 0 ? (
+                    <View style={styles.skillsContainer}>
+                        {skills.map((skill, index) => (
+                            <Text key={index} style={styles.skillTag}>{skill}</Text>
+                        ))}
+                    </View>
+                ) : (
+                    <Text style={styles.noSkills}>No skills specified</Text>
+                )}
+            </View>
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" />
             ) : documents.length === 0 ? (
@@ -341,6 +351,36 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         textAlign: 'center',
     },
+    skillsCard: {
+        backgroundColor: '#ffb3d9', // Changed to light blue for visual distinction
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 12,
+        elevation: 2,
+    },
+    skillsTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 8,
+    },
+    skillsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    skillTag: {
+        backgroundColor: '#e0f7fa',
+        color: '#007bff',
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+        borderRadius: 15,
+        marginRight: 8,
+        marginBottom: 8,
+        fontSize: 12,
+    },
+    noSkills: {
+        fontSize: 13,
+        color: '#ff3300',
+    },
     docCard: {
         backgroundColor: '#ffffff',
         padding: 15,
@@ -362,48 +402,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#007bff',
         textDecorationLine: 'underline',
-    },
-    phoneRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    phoneText: {
-        fontSize: 14,
-        color: '#222',
-    },
-    noPhone: {
-        fontSize: 13,
-        color: '#999',
-        marginTop: 6,
-    },
-    callButton: {
-        backgroundColor: '#007bff',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 5,
-    },
-    callButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    hireButton: {
-        marginTop: 10,
-        backgroundColor: '#28a745',
-        paddingVertical: 8,
-        borderRadius: 5,
-        alignItems: 'center',
-    },
-    hireButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    noDocs: {
-        textAlign: 'center',
-        fontSize: 16,
-        color: '#999',
-        marginTop: 30,
     },
     row: {
         flexDirection: 'row',
@@ -427,5 +425,26 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
-
+    noPhone: {
+        fontSize: 13,
+        color: '#999',
+        marginTop: 6,
+    },
+    hireButton: {
+        marginTop: 10,
+        backgroundColor: '#28a745',
+        paddingVertical: 8,
+        borderRadius: 5,
+        alignItems: 'center',
+    },
+    hireButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    noDocs: {
+        textAlign: 'center',
+        fontSize: 16,
+        color: '#999',
+        marginTop: 30,
+    },
 });

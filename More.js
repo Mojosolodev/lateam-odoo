@@ -6,9 +6,8 @@ const options = [
   { id: '1', title: 'Recrutement', icon: 'people', description: 'Hire new Employees', color: '#D3D3D3' },
   { id: '2', title: 'Projects', icon: 'folder', description: 'Manage Projects', color: '#FFFF00' },
   { id: '3', title: 'Payment', icon: 'wallet', description: 'Pay your employees', color: '#90EE90' },
-  { id: '4', title: 'Tracking', icon: 'location-sharp', description: 'Find a place using Augmented Reality', color: '#00FFFF' },
-  { id: '5', title: 'About Us', icon: 'information-circle', description: 'Learn more about us' },
-  { id: '6', title: 'Logout', icon: 'log-out', description: 'Sign out of your account', color: '#ff4d4d' },
+  { id: '4', title: 'About Us', icon: 'information-circle', description: 'Learn more about us' },
+  { id: '5', title: 'Logout', icon: 'log-out', description: 'Sign out of your account', color: '#ff4d4d' },
 ];
 
 export default function More({ navigation, route }) {
