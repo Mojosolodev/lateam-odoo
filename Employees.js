@@ -40,7 +40,7 @@ export default function Employees({ route, navigation }) {
         params: {
           model: 'hr.employee',
           method: 'search_read',
-          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone', 'image_1920', 'work_email', 'department_id', 'job_id', 'parent_id', 'coach_id', 'active',]], // Include active
+          args: [[], ['id', 'name', 'job_title', 'mobile_phone', 'work_phone', 'image_1920', 'work_email', 'department_id', 'job_id', 'active',]], // Include active
           kwargs: {},
         },
       });

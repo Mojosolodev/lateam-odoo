@@ -107,16 +107,14 @@ export default function EmployeeDetail({ route }) {
 
       <Text style={styles.detail}><Text style={styles.label}>Department: </Text>{employee.department_id[1] || 'N/A'}</Text>
       <Text style={styles.detail}><Text style={styles.label}>Job Position: </Text>{employee.job_id[1] || 'N/A'}</Text>
-      <Text style={styles.detail}><Text style={styles.label}>Manager: </Text>{employee.manager_id || 'N/A'}</Text>
-      <Text style={styles.detail}><Text style={styles.label}>Coach: </Text>{employee.coach_id[1] || 'N/A'}</Text>
 
       <Text style={styles.detail}>
-        <Text style={styles.label}>Contract Start Date: </Text>
+        <Text style={styles.ImportantLabel}>Contract Start Date: </Text>
         {startDate !== null ? startDate : 'Loading...'}
       </Text>
 
       <Text style={styles.detail}>
-        <Text style={styles.label}>Salary: </Text>
+        <Text style={styles.ImportantLabel}>Salary: </Text>
         {wage !== null ? wage : 'Loading...'}
       </Text>
 
@@ -160,11 +158,15 @@ const styles = StyleSheet.create({
   detail: {
     fontSize: 16,
     color: '#333',
-    marginTop: 10,
+    marginTop: 18,
   },
   label: {
     fontWeight: 'bold',
     color: '#555',
+  },
+  ImportantLabel: {
+    fontWeight: 'bold',
+    color: '#5bb05bff',
   },
   phoneContainer: {
     flexDirection: 'row',
@@ -173,5 +175,6 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginLeft: 5,
+    marginTop: 18,
   },
 });

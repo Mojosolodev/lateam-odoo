@@ -102,6 +102,7 @@ export default function Documents({ route }) {
                     applicant: applicantName,
                     phone,
                     email,
+                    res_id: doc.res_id,
                 };
             }));
 
@@ -249,7 +250,7 @@ export default function Documents({ route }) {
             };
 
             if (imageBase64) {
-                employeeData.image_1920 = imageBase64;
+                employeeCraw: employeeData.image_1920 = imageBase64;
             }
 
             const newEmployeeId = await callOdoo({
@@ -262,6 +263,20 @@ export default function Documents({ route }) {
                 args: [employeeData],
             });
 
+            // Delete the applicant record after successful hire
+            await callOdoo({
+                url: odooUrl,
+                db: odooDb,
+                uid,
+                password: odooPassword,
+                model: 'hr.applicant',
+                method: 'unlink',
+                args: [[applicantId]],
+            });
+
+            // Update the documents list by removing the hired application
+            setDocuments(documents.filter(doc => doc.res_id !== applicantId));
+
             Alert.alert("Success", `You Hired: ${applicantData.partner_name}`);
         } catch (error) {
             console.error("Hire Error:", error);
@@ -269,6 +284,68 @@ export default function Documents({ route }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleReject = async (item) => {
+        Alert.alert(
+            "Confirm Rejection",
+            `Are you sure you want to reject the application from ${item.applicant}?`,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "Reject",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+
+                            const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0',
+                                    method: 'call',
+                                    id: 1,
+                                    params: {
+                                        service: 'common',
+                                        method: 'login',
+                                        args: [odooDb, odooUsername, odooPassword],
+                                    },
+                                }),
+                            });
+
+                            const loginData = await loginRes.json();
+                            const uid = loginData.result;
+                            if (!uid) throw new Error("Login failed");
+
+                            // Delete the applicant record
+                            await callOdoo({
+                                url: odooUrl,
+                                db: odooDb,
+                                uid,
+                                password: odooPassword,
+                                model: 'hr.applicant',
+                                method: 'unlink',
+                                args: [[item.res_id]],
+                            });
+
+                            // Update the documents list by removing the rejected application
+                            setDocuments(documents.filter(doc => doc.res_id !== item.res_id));
+
+                            Alert.alert("Success", `Application from ${item.applicant} has been rejected.`);
+                        } catch (error) {
+                            console.error("Reject Error:", error);
+                            Alert.alert("Error", error.message || "Failed to reject applicant.");
+                        } finally {
+                            setLoading(false);
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const renderItem = ({ item }) => (
@@ -306,12 +383,15 @@ export default function Documents({ route }) {
             <TouchableOpacity style={styles.hireButton} onPress={() => handleHire(item)}>
                 <Text style={styles.hireButtonText}>Hire</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={[styles.hireButton, { backgroundColor: '#dc3545' }]} onPress={() => handleReject(item)}>
+                <Text style={styles.hireButtonText}>Reject</Text>
+            </TouchableOpacity>
         </View>
     );
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Attachments : {jobTitle}</Text>
+            <Text style={styles.header}>Applications : {jobTitle}</Text>
             <View style={styles.skillsCard}>
                 <Text style={styles.skillsTitle}>Expected Skills</Text>
                 {skills && skills.length > 0 ? (
@@ -352,7 +432,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     skillsCard: {
-        backgroundColor: '#ffb3d9', // Changed to light blue for visual distinction
+        backgroundColor: '#ffb3d9',
         padding: 15,
         borderRadius: 10,
         marginBottom: 12,

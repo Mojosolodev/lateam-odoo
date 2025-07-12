@@ -28,7 +28,7 @@ export default function Jobs({ route }) {
       });
 
       if (!authResponse.data.result) {
-        Alert.alert('Erreur', 'Échec de l’authentification avec Odoo.');
+        Alert.alert('Error', 'Authentication Failed.');
         return;
       }
 
@@ -60,8 +60,8 @@ export default function Jobs({ route }) {
       setJobPositionCount(typeof jobCount === 'number' ? jobCount : 0);
       setDepartmentCount(typeof departmentCount === 'number' ? departmentCount : 0);
     } catch (error) {
-      console.error('Erreur lors de la récupération des données:', error.response?.data || error.message);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la récupération des données.');
+      console.error('An error occured while fetching data:', error.response?.data || error.message);
+      Alert.alert('Error', 'An error occured while fetching data.');
     } finally {
       setLoading(false);
     }
@@ -139,12 +139,12 @@ export default function Jobs({ route }) {
 
   async function handleDeleteDepartment(departmentId, departmentName) {
     Alert.alert(
-      'Confirmer la suppression',
-      `Voulez-vous vraiment supprimer le département "${departmentName}" ?`,
+      'Confirm Delete',
+      `Really want to Delete the department "${departmentName}" ?`,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -154,7 +154,7 @@ export default function Jobs({ route }) {
               });
 
               if (!authResponse.data.result) {
-                Alert.alert('Erreur', 'Échec de l’authentification avec Odoo.');
+                Alert.alert('Error', 'Authentication Failed.');
                 return;
               }
 
@@ -176,17 +176,17 @@ export default function Jobs({ route }) {
 
               if (response.data.result) {
                 console.log(`Department ${departmentName} deleted successfully`);
-                Alert.alert('Succès', `Le département "${departmentName}" a été supprimé.`);
+                Alert.alert('Success', `Department "${departmentName}" deleted successfully.`);
                 await fetchDepartments();
                 await fetchCounts();
               } else {
                 console.error('Department deletion response:', response.data);
-                Alert.alert('Erreur', 'Impossible de supprimer le département.');
+                Alert.alert('Error', 'Cannot Delete the Department.');
               }
             } catch (error) {
-              console.error('Erreur lors de la suppression du département:', error.response?.data || error.message);
+              console.error('Error deleting department:', error.response?.data || error.message);
               const errorMessage = error.response?.data?.error?.message || error.message || 'Une erreur est survenue.';
-              Alert.alert('Erreur', `Échec de la suppression: ${errorMessage}`);
+              Alert.alert('Error', `Error during Deletion: ${errorMessage}`);
             }
           },
         },
@@ -196,12 +196,12 @@ export default function Jobs({ route }) {
 
   async function handleDeleteJob(jobId, jobName) {
     Alert.alert(
-      'Confirmer la suppression',
-      `Voulez-vous vraiment supprimer le poste "${jobName}" ?`,
+      'Confirm Delete?',
+      `Do you really want to delete the Job: "${jobName}" ?`,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -211,7 +211,7 @@ export default function Jobs({ route }) {
               });
 
               if (!authResponse.data.result) {
-                Alert.alert('Erreur', 'Échec de l’authentification avec Odoo.');
+                Alert.alert('Error', 'Authentication Failed.');
                 return;
               }
 
@@ -233,17 +233,17 @@ export default function Jobs({ route }) {
 
               if (response.data.result) {
                 console.log(`Job ${jobName} deleted successfully`);
-                Alert.alert('Succès', `Le poste "${jobName}" a été supprimé.`);
+                Alert.alert('Success', `The Job "${jobName}" has been Deleted.`);
                 await fetchJobs();
                 await fetchCounts();
               } else {
                 console.error('Job deletion response:', response.data);
-                Alert.alert('Erreur', 'Impossible de supprimer le poste.');
+                Alert.alert('Error', 'Cannot Delete the Job.');
               }
             } catch (error) {
-              console.error('Erreur lors de la suppression du poste:', error.response?.data || error.message);
-              const errorMessage = error.response?.data?.error?.message || error.message || 'Une erreur est survenue.';
-              Alert.alert('Erreur', `Échec de la suppression: ${errorMessage}`);
+              console.error('Error during deletion of job:', error.response?.data || error.message);
+              const errorMessage = error.response?.data?.error?.message || error.message || 'An error Occured.';
+              Alert.alert('Error', `Failed to Delete: ${errorMessage}`);
             }
           },
         },
