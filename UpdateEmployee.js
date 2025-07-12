@@ -43,6 +43,7 @@ export default function UpdateEmployee({ route, navigation }) {
           setDepartments(response.data.result);
         }
       } catch (error) {
+        Alert('Unstable Internet','Try Again later');
         console.error('Error fetching departments:', error);
       }
     }
@@ -63,6 +64,7 @@ export default function UpdateEmployee({ route, navigation }) {
           setJobPositions(response.data.result);
         }
       } catch (error) {
+        Alert('Unstable Internet','Try Again later');
         console.error('Error fetching job positions:', error);
       }
     }
@@ -82,6 +84,7 @@ export default function UpdateEmployee({ route, navigation }) {
           setWage(String(response.data.result[0].wage || ''));
         }
       } catch (error) {
+        Alert('Unstable Internet','Try Again later');
         console.error('Error fetching employee wage:', error);
       }
     }

@@ -72,14 +72,14 @@ export default function AddDepartment({ route }) {
       });
 
       if (response.data.result) {
-        Alert.alert('Succès', 'Département ajouté avec succès.');
+        Alert.alert('Success', 'Department Added Successfully.');
         navigation.goBack();
       } else {
-        Alert.alert('Erreur', 'Impossible d’ajouter le département.');
+        Alert.alert('Error', 'Impossible to Add Department.');
       }
     } catch (error) {
       console.error('Erreur lors de l’ajout du département:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue.');
+      Alert.alert('Error', 'An Error Occured.');
     } finally {
       setLoading(false); // Stop loading
     }

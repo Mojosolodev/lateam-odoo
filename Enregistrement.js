@@ -131,14 +131,15 @@ export default function Enregistrement({ route, navigation }) {
           if (onEmployeeAdded) onEmployeeAdded();
           navigation.goBack();
         } else {
-          Alert.alert('Partial Success', 'Employee added, but failed to create contract.');
+          Alert.alert('Success', 'Employee added, You can now set his/her Salary.');
+          navigation.goBack();
         }
       } else {
         Alert.alert('Error', 'Failed to save employee. Please check your server or inputs.');
       }
     } catch (error) {
       console.error('Error saving employee or contract:', error);
-      Alert.alert('Error', 'An unexpected error occurred while saving.');
+      Alert.alert('Error', 'Check Your Internet access.');
     }
   };
 

@@ -55,7 +55,7 @@ export default function Recrutement({ navigation, route }) {
                 method: 'search_read',
                 args: [],
                 kwargs: {
-                    fields: ['id', 'name', 'website_published', 'website_url', 'skill_ids'],
+                    fields: ['id', 'name', 'website_published', 'website_url', 'skill_ids', 'department_id'],
                 },
             });
 
@@ -96,6 +96,7 @@ export default function Recrutement({ navigation, route }) {
                         link,
                         published: job.website_published,
                         skills,
+                        department_id: job.department_id ? job.department_id[0] : false,
                     };
                 })
             );
@@ -211,6 +212,7 @@ export default function Recrutement({ navigation, route }) {
                     odooUsername,
                     odooPassword,
                     skills: item.skills,
+                    department_id: item.department_id,
                 })
             }
         >
@@ -231,7 +233,7 @@ export default function Recrutement({ navigation, route }) {
                 <Text style={styles.link}>{item.link}</Text>
             </TouchableOpacity>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-                <Text>Hiring: </Text>
+                <Text>Hiring ? </Text>
                 {updatingJobId === item.id ? (
                     <ActivityIndicator size="small" color="#007bff" />
                 ) : (

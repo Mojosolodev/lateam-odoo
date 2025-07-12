@@ -94,11 +94,11 @@ export default function UpdateJob({ route, navigation }) {
 
   async function handleUpdateJob() {
     if (!name || !newDepartmentId) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires (Nom du poste, Département).');
+      Alert.alert('Error', 'Fill all the Information required.');
       return;
     }
     if (skillsInput && !skillTypeId) {
-      Alert.alert('Erreur', 'Veuillez sélectionner un type de compétence pour les compétences saisies.');
+      Alert.alert('Error', 'Select a Skill Type.');
       return;
     }
 
@@ -202,16 +202,16 @@ export default function UpdateJob({ route, navigation }) {
 
       if (response.data.result) {
         console.log('Job updated successfully, ID:', jobId);
-        Alert.alert('Succès', 'Poste mis à jour avec succès.');
+        Alert.alert('Success', 'Job Updated Successfully.');
         navigation.goBack();
       } else {
         console.error('Job update response:', response.data);
-        Alert.alert('Erreur', 'Impossible de mettre à jour le poste.');
+        Alert.alert('Error', 'Cant Update Job.');
       }
     } catch (error) {
       console.error('Erreur lors de la mise à jour du poste:', error.response?.data || error.message);
       const errorMessage = error.response?.data?.error?.message || error.message || 'Une erreur est survenue.';
-      Alert.alert('Erreur', `Échec de la mise à jour: ${errorMessage}`);
+      Alert.alert('Error', `Error during update: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

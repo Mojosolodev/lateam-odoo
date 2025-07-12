@@ -4,7 +4,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 export default function Documents({ route }) {
-    const { jobId, jobTitle, odooUrl, odooDb, odooUsername, odooPassword, skills } = route.params;
+    const { jobId, jobTitle, odooUrl, odooDb, odooUsername, odooPassword, skills, department_id } = route.params;
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -183,107 +183,124 @@ export default function Documents({ route }) {
     };
 
     const handleHire = async (item) => {
-        try {
-            setLoading(true);
+        Alert.alert(
+            "Confirm Hire",
+            `Are you sure you want to hire ${item.applicant}?`,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "Hire",
+                    style: "default",
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
 
-            const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'call',
-                    id: 1,
-                    params: {
-                        service: 'common',
-                        method: 'login',
-                        args: [odooDb, odooUsername, odooPassword],
+                            const loginRes = await fetch(`${odooUrl}/jsonrpc`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0',
+                                    method: 'call',
+                                    id: 1,
+                                    params: {
+                                        service: 'common',
+                                        method: 'login',
+                                        args: [odooDb, odooUsername, odooPassword],
+                                    },
+                                }),
+                            });
+
+                            const loginData = await loginRes.json();
+                            const uid = loginData.result;
+                            if (!uid) throw new Error("Login failed");
+
+                            const attachment = await callOdoo({
+                                url: odooUrl,
+                                db: odooDb,
+                                uid,
+                                password: odooPassword,
+                                model: 'ir.attachment',
+                                method: 'read',
+                                args: [[item.id]],
+                                kwargs: { fields: ['res_id', 'datas', 'name'] },
+                            });
+
+                            const applicantId = attachment[0].res_id;
+                            const pdfBase64 = attachment[0].datas;
+                            if (!applicantId || !pdfBase64) throw new Error("Invalid attachment or applicant ID");
+
+                            const response = await fetch("https://lateam-odoo.onrender.com/extract-photo", {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ pdf_base64: pdfBase64 }),
+                            });
+
+                            const imageResult = await response.json();
+                            const imageBase64 = imageResult.image_base64;
+
+                            const applicant = await callOdoo({
+                                url: odooUrl,
+                                db: odooDb,
+                                uid,
+                                password: odooPassword,
+                                model: 'hr.applicant',
+                                method: 'read',
+                                args: [[applicantId]],
+                                kwargs: { fields: ['partner_name', 'email_from', 'job_id', 'partner_phone'] },
+                            });
+
+                            const applicantData = applicant[0];
+
+                            const employeeData = {
+                                name: applicantData.partner_name || "Unnamed",
+                                work_email: applicantData.email_from || "",
+                                job_id: applicantData.job_id ? applicantData.job_id[0] : false,
+                                work_phone: applicantData.partner_phone || "",
+                                department_id: department_id || false,
+                            };
+
+                            if (imageBase64) {
+                                employeeData.image_1920 = imageBase64;
+                            }
+
+                            const newEmployeeId = await callOdoo({
+                                url: odooUrl,
+                                db: odooDb,
+                                uid,
+                                password: odooPassword,
+                                model: 'hr.employee',
+                                method: 'create',
+                                args: [employeeData],
+                            });
+
+                            // Delete the applicant record after successful hire
+                            await callOdoo({
+                                url: odooUrl,
+                                db: odooDb,
+                                uid,
+                                password: odooPassword,
+                                model: 'hr.applicant',
+                                method: 'unlink',
+                                args: [[applicantId]],
+                            });
+
+                            // Update the documents list by removing the hired application
+                            setDocuments(documents.filter(doc => doc.res_id !== applicantId));
+
+                            Alert.alert("Success", `You Hired: ${applicantData.partner_name}`);
+                        } catch (error) {
+                            console.error("Hire Error:", error);
+                            Alert.alert("Error", error.message || "Failed to hire applicant.");
+                        } finally {
+                            setLoading(false);
+                        }
                     },
-                }),
-            });
-
-            const loginData = await loginRes.json();
-            const uid = loginData.result;
-            if (!uid) throw new Error("Login failed");
-
-            const attachment = await callOdoo({
-                url: odooUrl,
-                db: odooDb,
-                uid,
-                password: odooPassword,
-                model: 'ir.attachment',
-                method: 'read',
-                args: [[item.id]],
-                kwargs: { fields: ['res_id', 'datas', 'name'] },
-            });
-
-            const applicantId = attachment[0].res_id;
-            const pdfBase64 = attachment[0].datas;
-            if (!applicantId || !pdfBase64) throw new Error("Invalid attachment or applicant ID");
-
-            const response = await fetch("https://lateam-odoo.onrender.com/extract-photo", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pdf_base64: pdfBase64 }),
-            });
-
-            const imageResult = await response.json();
-            const imageBase64 = imageResult.image_base64;
-
-            const applicant = await callOdoo({
-                url: odooUrl,
-                db: odooDb,
-                uid,
-                password: odooPassword,
-                model: 'hr.applicant',
-                method: 'read',
-                args: [[applicantId]],
-                kwargs: { fields: ['partner_name', 'email_from', 'job_id', 'partner_phone'] },
-            });
-
-            const applicantData = applicant[0];
-
-            const employeeData = {
-                name: applicantData.partner_name || "Unnamed",
-                work_email: applicantData.email_from || "",
-                job_id: applicantData.job_id ? applicantData.job_id[0] : false,
-                work_phone: applicantData.partner_phone || "",
-            };
-
-            if (imageBase64) {
-                employeeCraw: employeeData.image_1920 = imageBase64;
-            }
-
-            const newEmployeeId = await callOdoo({
-                url: odooUrl,
-                db: odooDb,
-                uid,
-                password: odooPassword,
-                model: 'hr.employee',
-                method: 'create',
-                args: [employeeData],
-            });
-
-            // Delete the applicant record after successful hire
-            await callOdoo({
-                url: odooUrl,
-                db: odooDb,
-                uid,
-                password: odooPassword,
-                model: 'hr.applicant',
-                method: 'unlink',
-                args: [[applicantId]],
-            });
-
-            // Update the documents list by removing the hired application
-            setDocuments(documents.filter(doc => doc.res_id !== applicantId));
-
-            Alert.alert("Success", `You Hired: ${applicantData.partner_name}`);
-        } catch (error) {
-            console.error("Hire Error:", error);
-            Alert.alert("Error", error.message || "Failed to hire applicant.");
-        } finally {
-            setLoading(false);
-        }
+                },
+            ]
+        );
     };
 
     const handleReject = async (item) => {
